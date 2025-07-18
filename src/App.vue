@@ -161,7 +161,9 @@ export default {
         soundManager.enable()
       } catch (error) {
         // Silent fallback
-      }      gameStore.startGame()
+      }
+      
+      gameStore.startGame()
       gameEngine.start()
       
       // Test sound silently

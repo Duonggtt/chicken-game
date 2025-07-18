@@ -103,11 +103,14 @@ export const gameStore = reactive({
   endGame() {
     this.gameStarted = false
     this.gameOver = true
-    this.isPlaying = false
+    this.isPlaying = false // Stop all game activity
     this.saveScore()
   },
   
   nextLevel() {
+    // Temporarily stop game activity during level transition
+    this.isPlaying = false
+    
     this.level++
     this.chickensKilledThisLevel = 0 // Reset số gà đã giết
     this.increaseDifficulty()
@@ -120,6 +123,13 @@ export const gameStore = reactive({
     if (this.level % this.difficulty.bossLevel === 0) {
       this.spawnBoss()
     }
+    
+    // Resume game activity after brief delay for level transition
+    setTimeout(() => {
+      if (this.gameStarted && !this.paused) {
+        this.isPlaying = true
+      }
+    }, 500) // 500ms delay for level transition
   },
   
   resetDifficulty() {
