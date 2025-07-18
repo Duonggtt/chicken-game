@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sound Test</title>
+</head>
+<body>
+    <h1>Test Game Sounds</h1>
+    <div>
+        <button onclick="testBasicSound()">Test Basic Sound Manager</button>
+        <button onclick="testAdvancedSound()">Test Advanced Sound Manager</button>
+        <button onclick="testBothSounds()">Test Both Sounds</button>
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <p>Status: <span id="status">Ready</span></p>
+    </div>
+
+    <script type="module">
+        import { soundManager } from './src/services/soundManager.js'
+        import { advancedSoundManager } from './src/services/advancedSoundManager.js'
+        
+        window.testBasicSound = () => {
+            document.getElementById('status').textContent = 'Testing basic sound...'
+            soundManager.enable()
+            soundManager.play('shoot')
+            setTimeout(() => {
+                document.getElementById('status').textContent = 'Basic sound test completed'
+            }, 1000)
+        }
+        
+        window.testAdvancedSound = async () => {
+            document.getElementById('status').textContent = 'Testing advanced sound...'
+            try {
+                await advancedSoundManager.init()
+                advancedSoundManager.enable()
+                advancedSoundManager.play('shoot')
+                setTimeout(() => {
+                    document.getElementById('status').textContent = 'Advanced sound test completed'
+                }, 1000)
+            } catch (error) {
+                document.getElementById('status').textContent = 'Advanced sound error: ' + error.message
+            }
+        }
+        
+        window.testBothSounds = async () => {
+            document.getElementById('status').textContent = 'Testing both sounds...'
+            
+            // Test basic first
+            soundManager.enable()
+            soundManager.play('shoot')
+            
+            setTimeout(async () => {
+                // Test advanced
+                try {
+                    await advancedSoundManager.init()
+                    advancedSoundManager.enable()
+                    advancedSoundManager.play('powerUp')
+                    document.getElementById('status').textContent = 'Both sounds working!'
+                } catch (error) {
+                    document.getElementById('status').textContent = 'Only basic sound working'
+                }
+            }, 500)
+        }
+    </script>
+</body>
+</html>
