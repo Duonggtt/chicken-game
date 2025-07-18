@@ -61,7 +61,7 @@ import { gameStore } from './store/gameStore.js'
 import { gameEngine } from './engine/gameEngine.js'
 import { soundManager } from './services/soundManager.js'
 import { advancedSoundManager } from './services/advancedSoundManager.js'
-import userTracker from './services/userTracker.js'
+import { userTracker } from './services/userTracker.js'
 
 import LoadingScreen from './components/LoadingScreen.vue'
 import MainMenu from './components/MainMenu.vue'
