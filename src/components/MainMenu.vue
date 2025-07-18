@@ -73,7 +73,7 @@
           <div class="info-card">
             <div class="text-3xl mb-2">👑</div>
             <h3 class="text-lg font-bold text-white">Boss Battles</h3>
-            <p class="text-sm text-gray-300">Epic fights every 5 levels</p>
+            <p class="text-sm text-gray-300">Epic fights every 3 levels</p>
           </div>
         </div>
       </div>

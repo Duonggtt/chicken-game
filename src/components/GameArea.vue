@@ -23,8 +23,8 @@
       <div class="ui-center">
         <div v-if="gameStore.boss" class="boss-health">
           <div class="boss-info">
-            <span class="text-red-300 text-lg font-bold">🐔 BOSS LEVEL {{ gameStore.boss.level }}</span>
-            <span class="text-red-200 text-sm">{{ gameStore.boss.health }}/{{ gameStore.boss.maxHealth }} HP</span>
+            <span class="text-red-300 text-sm font-bold">🐔 BOSS LV{{ gameStore.boss.level }}</span>
+            <span class="text-red-200 text-xs">{{ gameStore.boss.health }}/{{ gameStore.boss.maxHealth }} HP</span>
           </div>
           <div class="boss-health-bar">
             <div 
@@ -328,15 +328,15 @@ export default {
 }
 
 .boss-health {
-  @apply flex flex-col items-center space-y-2 bg-black bg-opacity-60 rounded-lg p-3 backdrop-blur-sm;
+  @apply flex flex-col items-center space-y-1 bg-black bg-opacity-50 rounded-lg p-2 backdrop-blur-sm;
 }
 
 .boss-info {
-  @apply flex flex-col items-center space-y-1;
+  @apply flex flex-col items-center space-y-0;
 }
 
 .boss-health-bar {
-  @apply w-80 h-6 bg-red-900 rounded-full overflow-hidden border-2 border-red-400 shadow-lg;
+  @apply w-60 h-4 bg-red-900 rounded-full overflow-hidden border border-red-400 shadow-md;
 }
 
 .boss-health-fill {

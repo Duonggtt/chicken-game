@@ -378,12 +378,64 @@ export class GameEngine {
     if (!gameStore.boss) return
     
     const boss = gameStore.boss
-    boss.x += boss.direction * boss.speed * (deltaTime / 16)
     
-    // Bounce off walls
-    if (boss.x <= 0 || boss.x >= gameStore.screenWidth - boss.width) {
-      boss.direction *= -1
+    // Enhanced boss movement patterns
+    if (!boss.movementPattern) {
+      boss.movementPattern = 'horizontal'
+      boss.movementTimer = 0
+      boss.patternDuration = 3000 // 3 seconds per pattern
+      boss.verticalDirection = 1
     }
+    
+    boss.movementTimer += deltaTime
+    
+    // Switch movement patterns every 3 seconds
+    if (boss.movementTimer > boss.patternDuration) {
+      boss.movementTimer = 0
+      const patterns = ['horizontal', 'zigzag', 'circle', 'vertical']
+      boss.movementPattern = patterns[Math.floor(Math.random() * patterns.length)]
+    }
+    
+    // Apply movement based on pattern
+    switch (boss.movementPattern) {
+      case 'horizontal':
+        boss.x += boss.direction * boss.speed * (deltaTime / 16)
+        if (boss.x <= 0 || boss.x >= gameStore.screenWidth - boss.width) {
+          boss.direction *= -1
+        }
+        break
+        
+      case 'zigzag':
+        boss.x += boss.direction * boss.speed * (deltaTime / 16)
+        boss.y += Math.sin(boss.movementTimer / 200) * 2
+        if (boss.x <= 0 || boss.x >= gameStore.screenWidth - boss.width) {
+          boss.direction *= -1
+        }
+        break
+        
+      case 'circle':
+        const centerX = gameStore.screenWidth / 2
+        const radius = 80
+        const angle = boss.movementTimer / 1000
+        boss.x = centerX + Math.cos(angle) * radius - boss.width / 2
+        boss.y = 50 + Math.sin(angle) * 30
+        break
+        
+      case 'vertical':
+        boss.y += boss.verticalDirection * boss.speed * 0.5 * (deltaTime / 16)
+        if (boss.y <= 20 || boss.y >= 120) {
+          boss.verticalDirection *= -1
+        }
+        boss.x += boss.direction * boss.speed * 0.3 * (deltaTime / 16)
+        if (boss.x <= 0 || boss.x >= gameStore.screenWidth - boss.width) {
+          boss.direction *= -1
+        }
+        break
+    }
+    
+    // Keep boss within bounds
+    boss.x = Math.max(0, Math.min(boss.x, gameStore.screenWidth - boss.width))
+    boss.y = Math.max(20, Math.min(boss.y, 150))
     
     // Boss shooting với interval tăng dần theo level
     const shootInterval = boss.shotInterval || 1500
@@ -532,9 +584,11 @@ export class GameEngine {
       if (this.isPlayerHit(bullet)) {
         // Player hit by enemy bullet
         gameStore.bullets.splice(bulletIndex, 1)
+        this.createExplosion(bullet.x, bullet.y)
         
         if (gameStore.shield <= 0) {
-          gameStore.lives--
+          // Boss bullets cause 0.5 damage (half heart)
+          gameStore.lives -= 0.5
           if (gameStore.lives <= 0) {
             gameStore.endGame()
           }
