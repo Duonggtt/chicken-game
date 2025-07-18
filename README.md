@@ -6,6 +6,24 @@ Một trò chơi phiêu lưu không gian hoành tráng được xây dựng bằ
 
 ## ✨ Tính Năng Nổi Bật
 
+### 🎯 Gameplay Hấp Dẫn
+- **🔥 Độ Khó Tăng Dần**: Hệ thống difficulty scaling không giới hạn
+- **👹 Boss Battles**: Trận đánh boss epic sau mỗi 3 level với cơ chế độc đáo
+- **⚡ Hệ Thống Power-up**: Thu thập vũ khí đặc biệt (Rapid Fire, Spread Shot, Shield, Extra Life)
+- **🎯 Auto-targeting**: Phi thuyền theo dõi chuột/chạm với bắn tự động
+- **❤️ Nhiều Mạng**: Bắt đầu với 3 mạng, kiếm thêm qua power-ups
+- **♾️ Level Vô Hạn**: Gameplay không giới hạn với thử thách tăng dần
+- **📈 Số Gà Tăng Dần**: Số gà cần tiêu diệt tăng mạnh theo level (Level 1: 15 gà → Level 10: 60 gà)
+- **🎆 Hiệu Ứng Bắn Đa Dạng**: Bullet trails, particle effects, và visual feedback phong phú
+
+### 🎨 Đồ Họa & Âm Thanh
+
+Một trò chơi phiêu lưu không gian hoành tráng được xây dựng bằng Vue.js, nơi bạn điều khiển phi thuyền để chiến đấu với làn sóng gà và các boss mạnh mẽ!
+
+🎮 **[CHƠI NGAY TẠI ĐÂY](https://chicken-game-sigma.vercel.app/)** 🎮
+
+## ✨ Tính Năng Nổi Bật
+
 ### � Gameplay Hấp Dẫn
 - **🔥 Độ Khó Tăng Dần**: Hệ thống difficulty scaling không giới hạn
 - **👹 Boss Battles**: Trận đánh boss epic sau mỗi 5 level với cơ chế độc đáo
@@ -208,7 +226,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 👨‍💻 Tác Giả
 
-**Designed by AI** - *Initial work* - [GitHub](https://github.com/Duonggtt/chicken-game)
+**Designed by DTT** - *Initial work* - [GitHub](https://github.com/Duonggtt/chicken-game)
 
 ## 🌐 Links
 
@@ -218,5 +236,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
-**🎮 Sẵn sàng bắt đầu cuộc phiêu lưu không gian? Chạy `npm run dev` và tận hưởng! 🚀🐔**
 **🎮 Sẵn sàng bắt đầu cuộc phiêu lưu không gian? Chạy `npm run dev` và tận hưởng! 🚀🐔**

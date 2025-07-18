@@ -89,7 +89,7 @@
       <div class="footer text-center mt-12 mb-4 animate__animated animate__fadeIn animate__delay-3s">
         <div class="flex flex-col items-center space-y-2">
           <p class="text-white text-sm opacity-75">
-            💻 Designed by <span class="text-yellow-400 font-semibold">AI</span>
+            💻 Designed by <span class="text-yellow-400 font-semibold">DTT</span>
           </p>
           <a 
             href="https://github.com/Duonggtt/chicken-game" 

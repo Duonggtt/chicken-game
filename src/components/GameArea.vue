@@ -36,7 +36,7 @@
         <div class="level-progress mb-2">
           <span class="text-blue-300 text-sm">Level {{ gameStore.level }}</span>
           <div class="text-yellow-300 text-xs">
-            {{ gameStore.chickensKilledThisLevel }}/{{ gameStore.chickensRequiredPerLevel }} Chickens
+            {{ gameStore.chickensKilledThisLevel }}/{{ gameStore.getChickensRequired() }} Chickens
           </div>
         </div>
         

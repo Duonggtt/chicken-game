@@ -1,6 +1,7 @@
 import { gameStore } from '../store/gameStore.js'
 import { soundManager } from '../services/soundManager.js'
 import { advancedSoundManager } from '../services/advancedSoundManager.js'
+import { bulletEffects } from '../services/bulletEffects.js'
 
 export class GameEngine {
   constructor() {
@@ -75,18 +76,31 @@ export class GameEngine {
   
   shoot() {
     const spaceship = gameStore.spaceship
-    const bullet = {
+    const weaponType = gameStore.currentWeapon
+    
+    // Create bullet with enhanced effects
+    const bullet = bulletEffects.createBullet(
+      spaceship.x + spaceship.width / 2 - 2,
+      spaceship.y,
+      weaponType
+    )
+    
+    // Add to game store for collision detection
+    const gameStoreBullet = {
       id: Date.now() + Math.random(),
-      x: spaceship.x + spaceship.width / 2 - 2,
-      y: spaceship.y,
-      width: 4,
-      height: 8,
-      speed: 8,
-      type: gameStore.currentWeapon
+      x: bullet.x,
+      y: bullet.y,
+      width: bullet.width,
+      height: bullet.height,
+      speed: bullet.speed,
+      damage: bullet.damage,
+      type: weaponType,
+      element: bullet.element
     }
     
-    gameStore.bullets.push(bullet)
-    // Try advanced sound first, fallback to basic sound
+    gameStore.bullets.push(gameStoreBullet)
+    
+    // Play weapon sound
     try {
       advancedSoundManager.play('shoot')
     } catch (error) {
@@ -94,10 +108,43 @@ export class GameEngine {
     }
     
     // Multiple bullets for spread weapon
-    if (gameStore.currentWeapon === 'spread') {
-      const bullet2 = { ...bullet, x: bullet.x - 20, id: bullet.id + 1 }
-      const bullet3 = { ...bullet, x: bullet.x + 20, id: bullet.id + 2 }
-      gameStore.bullets.push(bullet2, bullet3)
+    if (weaponType === 'spread') {
+      // Create additional spread bullets
+      const spreadBullet1 = bulletEffects.createBullet(
+        spaceship.x + spaceship.width / 2 - 22,
+        spaceship.y,
+        'spread'
+      )
+      const spreadBullet2 = bulletEffects.createBullet(
+        spaceship.x + spaceship.width / 2 + 18,
+        spaceship.y,
+        'spread'
+      )
+      
+      gameStore.bullets.push(
+        {
+          id: gameStoreBullet.id + 1,
+          x: spreadBullet1.x,
+          y: spreadBullet1.y,
+          width: spreadBullet1.width,
+          height: spreadBullet1.height,
+          speed: spreadBullet1.speed,
+          damage: spreadBullet1.damage,
+          type: 'spread',
+          element: spreadBullet1.element
+        },
+        {
+          id: gameStoreBullet.id + 2,
+          x: spreadBullet2.x,
+          y: spreadBullet2.y,
+          width: spreadBullet2.width,
+          height: spreadBullet2.height,
+          speed: spreadBullet2.speed,
+          damage: spreadBullet2.damage,
+          type: 'spread',
+          element: spreadBullet2.element
+        }
+      )
     }
   }
   
@@ -126,6 +173,9 @@ export class GameEngine {
     
     // Show cursor when game stops
     document.body.style.cursor = 'default'
+    
+    // Clean up bullet effects
+    bulletEffects.cleanup()
     
     // Chỉ dừng nhạc nền, không disable sound manager
     try {
@@ -229,19 +279,34 @@ export class GameEngine {
   
   updateBullets(deltaTime) {
     gameStore.bullets = gameStore.bullets.filter(bullet => {
-      // Cập nhật vị trí đạn
+      // Update bullet using enhanced effects manager
+      const stillActive = bulletEffects.updateBullet(bullet)
+      
+      if (!stillActive) {
+        return false
+      }
+      
+      // Update position for collision detection
       if (bullet.velocityX !== undefined && bullet.velocityY !== undefined) {
         // Đạn có hướng bay (boss bullets)
         bullet.x += bullet.velocityX * (deltaTime / 16)
         bullet.y += bullet.velocityY * (deltaTime / 16)
       } else {
-        // Đạn bay thẳng (player bullets)
-        bullet.y -= bullet.speed * (deltaTime / 16)
+        // Đạn bay thẳng (player bullets) - position already updated by bulletEffects
+        bullet.x = parseFloat(bullet.element.style.left)
+        bullet.y = parseFloat(bullet.element.style.top)
       }
       
       // Remove bullets that are off screen
-      return bullet.y > -10 && bullet.y < gameStore.screenHeight + 10 && 
-             bullet.x > -10 && bullet.x < gameStore.screenWidth + 10
+      const inBounds = bullet.y > -10 && bullet.y < gameStore.screenHeight + 10 && 
+                      bullet.x > -10 && bullet.x < gameStore.screenWidth + 10
+      
+      if (!inBounds) {
+        bulletEffects.removeBullet(bullet)
+        return false
+      }
+      
+      return true
     })
   }
   
@@ -350,7 +415,18 @@ export class GameEngine {
       
       gameStore.chickens.forEach((chicken, chickenIndex) => {
         if (this.isBulletHittingEnemy(bullet, chicken)) {
-          chicken.health--
+          // Create hit effect at collision point
+          bulletEffects.createHitEffect(
+            chicken.x + chicken.width / 2, 
+            chicken.y + chicken.height / 2, 
+            bullet.type
+          )
+          
+          // Apply damage based on bullet type
+          chicken.health -= bullet.damage || 10
+          
+          // Remove bullet and clean up effects
+          bulletEffects.removeBullet(bullet)
           gameStore.bullets.splice(bulletIndex, 1)
           
           if (chicken.health <= 0) {
@@ -368,9 +444,21 @@ export class GameEngine {
       
       // Bullets vs Boss (forgiving collision for bullets)
       if (gameStore.boss && this.isBulletHittingEnemy(bullet, gameStore.boss)) {
-        gameStore.boss.health--
+        // Create enhanced hit effect for boss
+        bulletEffects.createHitEffect(
+          gameStore.boss.x + gameStore.boss.width / 2, 
+          gameStore.boss.y + gameStore.boss.height / 2, 
+          bullet.type
+        )
+        
+        // Apply damage based on bullet type
+        gameStore.boss.health -= bullet.damage || 10
+        
+        // Remove bullet and clean up effects
+        bulletEffects.removeBullet(bullet)
         gameStore.bullets.splice(bulletIndex, 1)
         gameStore.addScore(50)
+        
         try {
           advancedSoundManager.play('bossHit')
         } catch (error) {
@@ -490,7 +578,7 @@ export class GameEngine {
   
   checkLevelComplete() {
     // Kiểm tra đã giết đủ gà và không còn gà trên màn hình
-    if (gameStore.chickensKilledThisLevel >= gameStore.chickensRequiredPerLevel && 
+    if (gameStore.chickensKilledThisLevel >= gameStore.getChickensRequired() && 
         gameStore.chickens.length === 0 && 
         !gameStore.boss && 
         Date.now() - this.lastChickenSpawn > 3000) {
