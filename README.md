@@ -1,4 +1,9 @@
-# 🐔 Chicken Shooter - Game Bắn Gà Siêu Hấp Dẫn 🚀
+# 🐔 Chicken Shooter### 🎨 Đồ Họa & Âm Thanh
+- **🌟 Đồ Họa Stunning**: Background động thay đổi theo level
+- **🎵 Hệ Thống Âm Thanh**: Audio toàn diện với nhạc nền và hiệu ứng
+- **💥 Hiệu Ứng Particle**: Nổ, power-ups và phản hồi visual
+- **🎪 Animation Mượt**: CSS animations với Animate.css
+- **📱 Responsive Design**: Tối ưu cho mobile, tablet và desktop Gà Siêu Hấp Dẫn 🚀
 
 Một trò chơi phiêu lưu không gian hoành tráng được xây dựng bằng Vue.js, nơi bạn điều khiển phi thuyền để chiến đấu với làn sóng gà và các boss mạnh mẽ!
 
@@ -13,26 +18,17 @@ Một trò chơi phiêu lưu không gian hoành tráng được xây dựng bằ
 - **🎯 Auto-targeting**: Phi thuyền theo dõi chuột/chạm với bắn tự động
 - **❤️ Nhiều Mạng**: Bắt đầu với 3 mạng, kiếm thêm qua power-ups
 - **♾️ Level Vô Hạn**: Gameplay không giới hạn với thử thách tăng dần
-- **📈 Số Gà Tăng Dần**: Số gà cần tiêu diệt tăng mạnh theo level (Level 1: 15 gà → Level 10: 60 gà)
+- **📈 Số Gà Vừa Phải**: Số gà cần tiêu diệt tăng hợp lý theo level (Level 1: 15 gà → Level 5: 40 gà → Level 10: 65 gà)
+- **🐔 Spawn Nhiều Gà**: Bắt đầu với 2 gà, level cao spawn tới 6 gà cùng lúc mỗi round
+- **⚡ Spawn Nhanh**: Thời gian spawn giảm mạnh mỗi level (từ 800ms xuống 150ms)
 - **🎆 Hiệu Ứng Bắn Đa Dạng**: Bullet trails, particle effects, và visual feedback phong phú
 
 ### 🎨 Đồ Họa & Âm Thanh
-
-Một trò chơi phiêu lưu không gian hoành tráng được xây dựng bằng Vue.js, nơi bạn điều khiển phi thuyền để chiến đấu với làn sóng gà và các boss mạnh mẽ!
-
-🎮 **[CHƠI NGAY TẠI ĐÂY](https://chicken-game-sigma.vercel.app/)** 🎮
-
-## ✨ Tính Năng Nổi Bật
-
-### � Gameplay Hấp Dẫn
-- **🔥 Độ Khó Tăng Dần**: Hệ thống difficulty scaling không giới hạn
-- **👹 Boss Battles**: Trận đánh boss epic sau mỗi 5 level với cơ chế độc đáo
-- **⚡ Hệ Thống Power-up**: Thu thập vũ khí đặc biệt (Rapid Fire, Spread Shot, Shield, Extra Life)
-- **🎯 Auto-targeting**: Phi thuyền theo dõi chuột/chạm với bắn tự động
-- **❤️ Nhiều Mạng**: Bắt đầu với 3 mạng, kiếm thêm qua power-ups
-- **♾️ Level Vô Hạn**: Gameplay không giới hạn với thử thách tăng dần
-
-### 🎨 Đồ Họa & Âm Thanh
+- **🌟 Đồ Họa Stunning**: Background động thay đổi theo level
+- **� Hệ Thống Âm Thanh**: Audio toàn diện với nhạc nền và hiệu ứng
+- **💥 Hiệu Ứng Particle**: Nổ, power-ups và phản hồi visual
+- **� Animation Mượt**: CSS animations với Animate.css
+- **📱 Responsive Design**: Tối ưu cho mobile, tablet và desktop
 - **🌟 Đồ Họa Stunning**: Background động thay đổi theo level
 - **🎵 Hệ Thống Âm Thanh**: Audio toàn diện với nhạc nền và hiệu ứng
 - **💥 Hiệu Ứng Particle**: Nổ, power-ups và phản hồi visual
@@ -203,26 +199,6 @@ chicken-game/
 ├── vercel.json          # Vercel configuration
 └── package.json         # Dependencies
 ```
-
-## 🌟 Tính Năng Sắp Tới
-
-- [ ] Multiplayer mode
-- [ ] More power-up types
-- [ ] Achievement system
-- [ ] Social sharing
-- [ ] Tournament mode
-
-## 🤝 Đóng Góp
-
-1. Fork repository
-2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Mở Pull Request
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 👨‍💻 Tác Giả
 

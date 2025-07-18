@@ -11,7 +11,11 @@ export class GameEngine {
     this.animationId = null
     this.mouseX = 0
     this.mouseY = 0
+    this.targetX = 0
+    this.targetY = 0
     this.autoShootInterval = null
+    this.lastMouseUpdate = 0
+    this.mouseMoveThrottle = 16 // ~60fps
     
     this.init()
   }
@@ -22,28 +26,34 @@ export class GameEngine {
   }
   
   setupEventListeners() {
-    // Mouse movement for spaceship control
+    // Mouse movement for spaceship control with throttling
     document.addEventListener('mousemove', (e) => {
+      const now = Date.now()
+      if (now - this.lastMouseUpdate < this.mouseMoveThrottle) return
+      this.lastMouseUpdate = now
+      
       const gameArea = document.getElementById('game-area')
       if (!gameArea) return
       
       const rect = gameArea.getBoundingClientRect()
-      this.mouseX = e.clientX - rect.left
-      this.mouseY = e.clientY - rect.top
-      this.updateSpaceshipPosition()
+      this.targetX = e.clientX - rect.left
+      this.targetY = e.clientY - rect.top
     })
     
-    // Touch events for mobile
+    // Touch events for mobile with throttling
     document.addEventListener('touchmove', (e) => {
       e.preventDefault()
+      const now = Date.now()
+      if (now - this.lastMouseUpdate < this.mouseMoveThrottle) return
+      this.lastMouseUpdate = now
+      
       const gameArea = document.getElementById('game-area')
       if (!gameArea) return
       
       const rect = gameArea.getBoundingClientRect()
       const touch = e.touches[0]
-      this.mouseX = touch.clientX - rect.left
-      this.mouseY = touch.clientY - rect.top
-      this.updateSpaceshipPosition()
+      this.targetX = touch.clientX - rect.left
+      this.targetY = touch.clientY - rect.top
     }, { passive: false })
     
     // Resize handler
@@ -61,9 +71,20 @@ export class GameEngine {
     const spaceship = gameStore.spaceship
     const margin = 10
     
-    // Follow mouse with boundaries
-    spaceship.x = Math.max(margin, Math.min(this.mouseX - spaceship.width / 2, gameStore.screenWidth - spaceship.width - margin))
-    spaceship.y = Math.max(margin, Math.min(this.mouseY - spaceship.height / 2, gameStore.screenHeight - spaceship.height - margin))
+    // Smooth interpolation factor (0.1 = slow, 0.3 = fast)
+    const lerpFactor = 0.15
+    
+    // Calculate target position with boundaries
+    const targetX = Math.max(margin, Math.min(this.targetX - spaceship.width / 2, gameStore.screenWidth - spaceship.width - margin))
+    const targetY = Math.max(margin, Math.min(this.targetY - spaceship.height / 2, gameStore.screenHeight - spaceship.height - margin))
+    
+    // Smooth interpolation to target position
+    spaceship.x += (targetX - spaceship.x) * lerpFactor
+    spaceship.y += (targetY - spaceship.y) * lerpFactor
+    
+    // Update mouse position for reference
+    this.mouseX = this.targetX
+    this.mouseY = this.targetY
   }
   
   startAutoShoot() {
@@ -153,6 +174,10 @@ export class GameEngine {
       cancelAnimationFrame(this.animationId)
     }
     
+    // Initialize spaceship position targets
+    this.targetX = gameStore.spaceship.x + gameStore.spaceship.width / 2
+    this.targetY = gameStore.spaceship.y + gameStore.spaceship.height / 2
+    
     // Hide cursor during gameplay
     document.body.style.cursor = 'none'
     
@@ -217,6 +242,9 @@ export class GameEngine {
     const deltaTime = currentTime - this.lastTime
     this.lastTime = currentTime
     
+    // Always update spaceship position for smooth movement
+    this.updateSpaceshipPosition()
+    
     if (!gameStore.paused) {
       this.spawnChickens(currentTime)
       this.spawnPowerUps(currentTime)
@@ -239,20 +267,28 @@ export class GameEngine {
     const spawnRate = gameStore.difficulty.spawnRate * (gameStore.difficulty.spawnRateMultiplier || 1.0)
     
     if (currentTime - this.lastChickenSpawn > spawnRate) {
-      const chicken = {
-        id: Date.now() + Math.random(),
-        x: Math.random() * (gameStore.screenWidth - 40),
-        y: -40,
-        width: 40,
-        height: 30,
-        speed: gameStore.difficulty.chickenSpeed + Math.random() * 2,
-        health: Math.floor(gameStore.level / 3) + 1,
-        maxHealth: Math.floor(gameStore.level / 3) + 1,
-        zigzag: Math.random() > 0.7,
-        zigzagDirection: 1
+      // Số gà spawn cùng lúc tăng theo level để tạo nhiều gà trên màn hình
+      const baseChickens = 2 // Bắt đầu với 2 gà
+      const extraChickens = Math.floor(gameStore.level / 2) // Thêm 1 gà mỗi 2 level
+      const chickensToSpawn = Math.min(baseChickens + extraChickens, 6) // Tối đa 6 gà cùng lúc
+      
+      for (let i = 0; i < chickensToSpawn; i++) {
+        const chicken = {
+          id: Date.now() + Math.random() + i,
+          x: Math.random() * (gameStore.screenWidth - 40),
+          y: -40 - (i * 50), // Spread vertical position để không overlap
+          width: 40,
+          height: 30,
+          speed: gameStore.difficulty.chickenSpeed + Math.random() * 2,
+          health: Math.floor(gameStore.level / 3) + 1,
+          maxHealth: Math.floor(gameStore.level / 3) + 1,
+          zigzag: Math.random() > 0.7,
+          zigzagDirection: 1
+        }
+        
+        gameStore.chickens.push(chicken)
       }
       
-      gameStore.chickens.push(chicken)
       this.lastChickenSpawn = currentTime
     }
   }
@@ -279,22 +315,27 @@ export class GameEngine {
   
   updateBullets(deltaTime) {
     gameStore.bullets = gameStore.bullets.filter(bullet => {
-      // Update bullet using enhanced effects manager
-      const stillActive = bulletEffects.updateBullet(bullet)
-      
-      if (!stillActive) {
-        return false
-      }
-      
-      // Update position for collision detection
-      if (bullet.velocityX !== undefined && bullet.velocityY !== undefined) {
-        // Đạn có hướng bay (boss bullets)
-        bullet.x += bullet.velocityX * (deltaTime / 16)
-        bullet.y += bullet.velocityY * (deltaTime / 16)
+      // Update bullet using enhanced effects manager only for player bullets
+      if (bullet.type !== 'enemy') {
+        const stillActive = bulletEffects.updateBullet(bullet)
+        
+        if (!stillActive) {
+          return false
+        }
+        
+        // Update position for collision detection (player bullets)
+        if (bullet.element && bullet.element.style) {
+          bullet.x = parseFloat(bullet.element.style.left) || bullet.x
+          bullet.y = parseFloat(bullet.element.style.top) || bullet.y
+        }
       } else {
-        // Đạn bay thẳng (player bullets) - position already updated by bulletEffects
-        bullet.x = parseFloat(bullet.element.style.left)
-        bullet.y = parseFloat(bullet.element.style.top)
+        // Boss/enemy bullets - update position manually
+        if (bullet.velocityX !== undefined && bullet.velocityY !== undefined) {
+          bullet.x += bullet.velocityX * (deltaTime / 16)
+          bullet.y += bullet.velocityY * (deltaTime / 16)
+        } else {
+          bullet.y -= bullet.speed * (deltaTime / 16)
+        }
       }
       
       // Remove bullets that are off screen
@@ -302,7 +343,9 @@ export class GameEngine {
                       bullet.x > -10 && bullet.x < gameStore.screenWidth + 10
       
       if (!inBounds) {
-        bulletEffects.removeBullet(bullet)
+        if (bullet.type !== 'enemy' && bullet.element) {
+          bulletEffects.removeBullet(bullet)
+        }
         return false
       }
       
@@ -409,9 +452,9 @@ export class GameEngine {
   }
   
   checkCollisions() {
-    // Bullets vs Chickens (forgiving collision for bullets)
+    // Bullets vs Chickens and Boss (only player bullets)
     gameStore.bullets.forEach((bullet, bulletIndex) => {
-      if (bullet.type === 'enemy') return
+      if (bullet.type === 'enemy') return // Skip enemy bullets
       
       gameStore.chickens.forEach((chicken, chickenIndex) => {
         if (this.isBulletHittingEnemy(bullet, chicken)) {
@@ -426,13 +469,16 @@ export class GameEngine {
           chicken.health -= bullet.damage || 10
           
           // Remove bullet and clean up effects
-          bulletEffects.removeBullet(bullet)
+          if (bullet.element) {
+            bulletEffects.removeBullet(bullet)
+          }
           gameStore.bullets.splice(bulletIndex, 1)
           
           if (chicken.health <= 0) {
             this.createExplosion(chicken.x + chicken.width / 2, chicken.y + chicken.height / 2)
             gameStore.chickens.splice(chickenIndex, 1)
             gameStore.addScore(10)
+            gameStore.chickensKilledThisLevel++
             try {
               advancedSoundManager.play('chickenHit')
             } catch (error) {
@@ -442,7 +488,7 @@ export class GameEngine {
         }
       })
       
-      // Bullets vs Boss (forgiving collision for bullets)
+      // Bullets vs Boss (only player bullets)
       if (gameStore.boss && this.isBulletHittingEnemy(bullet, gameStore.boss)) {
         // Create enhanced hit effect for boss
         bulletEffects.createHitEffect(
@@ -455,7 +501,9 @@ export class GameEngine {
         gameStore.boss.health -= bullet.damage || 10
         
         // Remove bullet and clean up effects
-        bulletEffects.removeBullet(bullet)
+        if (bullet.element) {
+          bulletEffects.removeBullet(bullet)
+        }
         gameStore.bullets.splice(bulletIndex, 1)
         gameStore.addScore(50)
         
@@ -474,6 +522,31 @@ export class GameEngine {
           } catch (error) {
             soundManager.play('explosion')
           }
+        }
+      }
+    })
+    
+    // Enemy bullets vs Player
+    gameStore.bullets.forEach((bullet, bulletIndex) => {
+      if (bullet.type !== 'enemy') return // Only check enemy bullets
+      
+      if (this.isPlayerHit(bullet)) {
+        // Player hit by enemy bullet
+        gameStore.bullets.splice(bulletIndex, 1)
+        
+        if (gameStore.shield <= 0) {
+          gameStore.lives--
+          if (gameStore.lives <= 0) {
+            gameStore.endGame()
+          }
+        } else {
+          gameStore.shield--
+        }
+        
+        try {
+          advancedSoundManager.play('playerHit')
+        } catch (error) {
+          soundManager.play('playerHit')
         }
       }
     })
@@ -538,6 +611,12 @@ export class GameEngine {
   isEnemyHittingPlayer(enemy, player) {
     const padding = -2 // Negative padding = must overlap slightly
     return this.isColliding(enemy, player, padding)
+  }
+  
+  // Collision detection for enemy bullets hitting player
+  isPlayerHit(bullet) {
+    const padding = -1 // Precise collision for enemy bullets
+    return this.isColliding(bullet, gameStore.spaceship, padding)
   }
   
   createExplosion(x, y) {

@@ -16,7 +16,7 @@ export const gameStore = reactive({
   score: 0,
   lives: 3,
   chickensKilledThisLevel: 0,
-  // Số gà cần giết sẽ tăng mạnh theo level để tăng độ khó
+  // Số gà cần giết giữ nguyên mức vừa phải
   getChickensRequired() {
     // Level 1: 15 gà, Level 2: 20 gà, Level 3: 25 gà, Level 10: 60 gà
     return Math.floor(15 + (this.level * 5)) // Tăng 5 gà mỗi level
@@ -25,10 +25,10 @@ export const gameStore = reactive({
   // Difficulty scaling
   difficulty: {
     chickenSpeed: 1,
-    spawnRate: 1500, // Giảm từ 2000 xuống 1500ms để spawn nhanh hơn
+    spawnRate: 800, // Giảm từ 1500 xuống 800ms để spawn nhanh hơn ngay từ đầu
     bossLevel: 3, // Boss xuất hiện mỗi 3 level thay vì 10
     speedMultiplier: 1.2,
-    spawnRateDecrease: 0.85, // Giảm từ 0.9 xuống 0.85 để spawn nhanh hơn mỗi level
+    spawnRateDecrease: 0.75, // Giảm từ 0.85 xuống 0.75 để spawn nhanh hơn mỗi level
     // Settings modifiers
     chickenSpeedMultiplier: 1.0,
     spawnRateMultiplier: 1.0,
@@ -135,8 +135,8 @@ export const gameStore = reactive({
     this.difficulty.spawnRate *= this.difficulty.spawnRateDecrease
     
     // Giới hạn thời gian spawn tối thiểu thấp hơn để spawn nhiều gà hơn
-    if (this.difficulty.spawnRate < 300) { // Giảm từ 500 xuống 300ms
-      this.difficulty.spawnRate = 300
+    if (this.difficulty.spawnRate < 150) { // Giảm từ 300 xuống 150ms để spawn cực nhanh
+      this.difficulty.spawnRate = 150
     }
     
     console.log(`Level ${this.level}: Spawn rate: ${this.difficulty.spawnRate}ms, Speed: ${this.difficulty.chickenSpeed.toFixed(2)}x, Chickens needed: ${this.getChickensRequired()}`)
