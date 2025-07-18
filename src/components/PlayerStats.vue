@@ -1,41 +1,46 @@
 <template>
-  <div class="fixed top-4 right-4 z-50 bg-gradient-to-br from-black/90 via-gray-900/80 to-black/90 text-white px-4 py-3 rounded-xl backdrop-blur-md border border-yellow-400/40 shadow-2xl">
-    <div class="text-sm space-y-2 min-w-[160px]">
-      <!-- Header -->
-      <div class="text-center text-yellow-400 font-bold text-xs mb-2 border-b border-yellow-400/30 pb-1">
-        📊 THỐNG KÊ THẬT
-      </div>
-      
-      <!-- Total Players -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="text-green-400 text-lg">👥</span>
-          <span class="text-xs">Tổng:</span>
+  <div class="player-stats-container">
+    <div class="player-stats-card">
+      <div class="stats-content">
+        <!-- Header -->
+        <div class="stats-header">
+          📊 THỐNG KÊ THẬT
         </div>
-        <span class="font-bold text-green-400">{{ formatNumber(stats.totalPlayers) }}</span>
-      </div>
-      
-      <!-- Today Players -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="text-blue-400 text-lg">📅</span>
-          <span class="text-xs">Hôm nay:</span>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <!-- Total Players -->
+          <div class="stat-item">
+            <div class="stat-icon-label">
+              <span class="stat-icon text-green-400">👥</span>
+              <span class="stat-label">Tổng:</span>
+            </div>
+            <span class="stat-value text-green-400">{{ formatNumber(stats.totalPlayers) }}</span>
+          </div>
+          
+          <!-- Today Players -->
+          <div class="stat-item">
+            <div class="stat-icon-label">
+              <span class="stat-icon text-blue-400">📅</span>
+              <span class="stat-label">Hôm nay:</span>
+            </div>
+            <span class="stat-value text-blue-400">{{ formatNumber(stats.todayPlayers) }}</span>
+          </div>
+          
+          <!-- Online Players -->
+          <div class="stat-item">
+            <div class="stat-icon-label">
+              <span class="stat-icon text-yellow-400 animate-pulse">🟡</span>
+              <span class="stat-label">Online:</span>
+            </div>
+            <span class="stat-value text-yellow-400">{{ formatNumber(stats.onlinePlayers) }}</span>
+          </div>
         </div>
-        <span class="font-bold text-blue-400">{{ formatNumber(stats.todayPlayers) }}</span>
-      </div>
-      
-      <!-- Online Players -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="text-yellow-400 text-lg animate-pulse">🟡</span>
-          <span class="text-xs">Online:</span>
+        
+        <!-- Last Updated -->
+        <div class="stats-footer">
+          <span class="update-time">Cập nhật: {{ lastUpdated }}</span>
         </div>
-        <span class="font-bold text-yellow-400">{{ formatNumber(stats.onlinePlayers) }}</span>
-      </div>
-      
-      <!-- Last Updated -->
-      <div class="text-xs text-gray-400 text-center pt-2 border-t border-gray-600/30">
-        <span class="text-xs">Cập nhật: {{ lastUpdated }}</span>
       </div>
     </div>
   </div>
@@ -147,5 +152,197 @@ export default {
 </script>
 
 <style scoped>
-/* Additional custom styles if needed */
+/* Responsive Player Stats Container */
+.player-stats-container {
+  @apply fixed z-50 text-white;
+  
+  /* Desktop: Top right corner */
+  @apply top-4 right-4;
+}
+
+.player-stats-card {
+  @apply bg-gradient-to-br from-black/90 via-gray-900/80 to-black/90;
+  @apply backdrop-blur-md border border-yellow-400/40 shadow-2xl;
+  @apply rounded-xl px-4 py-3;
+  
+  /* Responsive adjustments */
+  @apply min-w-[160px] max-w-[200px];
+}
+
+.stats-content {
+  @apply text-sm space-y-2;
+}
+
+.stats-header {
+  @apply text-center text-yellow-400 font-bold text-xs mb-2;
+  @apply border-b border-yellow-400/30 pb-1;
+}
+
+.stats-grid {
+  @apply space-y-2;
+}
+
+.stat-item {
+  @apply flex items-center justify-between;
+}
+
+.stat-icon-label {
+  @apply flex items-center gap-2;
+}
+
+.stat-icon {
+  @apply text-lg;
+}
+
+.stat-label {
+  @apply text-xs;
+}
+
+.stat-value {
+  @apply font-bold;
+}
+
+.stats-footer {
+  @apply text-xs text-gray-400 text-center pt-2;
+  @apply border-t border-gray-600/30;
+}
+
+.update-time {
+  @apply text-xs;
+}
+
+/* Tablet adjustments (iPad) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .player-stats-container {
+    @apply top-3 right-3;
+  }
+  
+  .player-stats-card {
+    @apply px-3 py-2;
+    @apply min-w-[140px] max-w-[180px];
+  }
+  
+  .stats-content {
+    @apply text-xs space-y-1;
+  }
+  
+  .stat-icon {
+    @apply text-base;
+  }
+  
+  .stat-label, .update-time {
+    @apply text-xs;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 767px) {
+  .player-stats-container {
+    @apply top-2 right-2;
+  }
+  
+  .player-stats-card {
+    @apply px-2 py-2 rounded-lg;
+    @apply min-w-[120px] max-w-[140px];
+  }
+  
+  .stats-content {
+    @apply text-xs space-y-1;
+  }
+  
+  .stats-header {
+    @apply text-xs mb-1 pb-1;
+  }
+  
+  .stats-grid {
+    @apply space-y-1;
+  }
+  
+  .stat-icon {
+    @apply text-sm;
+  }
+  
+  .stat-label {
+    @apply text-xs;
+  }
+  
+  .stat-value {
+    @apply text-xs;
+  }
+  
+  .stats-footer {
+    @apply pt-1;
+  }
+  
+  .update-time {
+    @apply text-xs;
+  }
+}
+
+/* Very small mobile (< 480px) */
+@media (max-width: 480px) {
+  .player-stats-container {
+    @apply top-1 right-1;
+  }
+  
+  .player-stats-card {
+    @apply px-2 py-1;
+    @apply min-w-[100px] max-w-[120px];
+  }
+  
+  .stats-content {
+    @apply text-xs space-y-1;
+  }
+  
+  .stat-item {
+    @apply flex-col items-start gap-0;
+  }
+  
+  .stat-icon-label {
+    @apply gap-1;
+  }
+  
+  .stat-icon {
+    @apply text-xs;
+  }
+  
+  .stat-label, .stat-value, .update-time {
+    @apply text-xs;
+  }
+  
+  .stats-header {
+    @apply text-xs;
+  }
+}
+
+/* Landscape mobile optimization */
+@media (max-height: 500px) and (orientation: landscape) {
+  .player-stats-container {
+    @apply top-1 right-1;
+  }
+  
+  .player-stats-card {
+    @apply px-2 py-1;
+  }
+  
+  .stats-content {
+    @apply space-y-0;
+  }
+  
+  .stats-grid {
+    @apply space-y-0 grid grid-cols-3 gap-2;
+  }
+  
+  .stat-item {
+    @apply flex-col text-center;
+  }
+  
+  .stat-icon-label {
+    @apply flex-col gap-0;
+  }
+  
+  .stats-header, .stats-footer {
+    @apply hidden;
+  }
+}
 </style>

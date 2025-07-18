@@ -477,8 +477,7 @@ export class GameEngine {
           if (chicken.health <= 0) {
             this.createExplosion(chicken.x + chicken.width / 2, chicken.y + chicken.height / 2)
             gameStore.chickens.splice(chickenIndex, 1)
-            gameStore.addScore(10)
-            gameStore.chickensKilledThisLevel++
+            gameStore.addScore(10) // addScore sẽ tự động tăng chickensKilledThisLevel
             try {
               advancedSoundManager.play('chickenHit')
             } catch (error) {
@@ -662,32 +661,26 @@ export class GameEngine {
       
       console.log(`Level ${gameStore.level} completed! Killed ${gameStore.chickensKilledThisLevel}/${gameStore.getChickensRequired()} chickens`)
       
-      // Pause game temporarily for level transition
-      gameStore.paused = true
-      
-      // Clear remaining chickens but keep bullets and effects for smooth visual
+      // Clear remaining chickens and power-ups immediately
       gameStore.chickens = []
       gameStore.powerUps = []
       
-      // Show level transition and resume after delay
-      setTimeout(() => {
-        gameStore.nextLevel()
-        gameStore.paused = false
-        
+      // Advance to next level immediately
+      gameStore.nextLevel()
+      
+      try {
+        advancedSoundManager.play('levelUp')
+      } catch (error) {
+        soundManager.play('levelUp')
+      }
+      
+      if (gameStore.boss) {
         try {
-          advancedSoundManager.play('levelUp')
+          advancedSoundManager.play('bossAppear')
         } catch (error) {
-          soundManager.play('levelUp')
+          soundManager.play('bossAppear')
         }
-        
-        if (gameStore.boss) {
-          try {
-            advancedSoundManager.play('bossAppear')
-          } catch (error) {
-            soundManager.play('bossAppear')
-          }
-        }
-      }, 1000) // 1 second delay for level transition
+      }
     }
   }
 }

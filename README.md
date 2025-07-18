@@ -1,5 +1,9 @@
-# 🐔 Chicken Shooter ### 🎨 Đồ Họa & Âm Thanh
-- **🌟 Đồ Họa Stunning**: Background động thay đổi theo level
+# 🐔 Chicken Shooter ### 🎨 Đồ Họa & Âm Than### 📊 Thống Kê Người Dùng Thật
+- **👥 Tổng Người Chơi**: Đếm tổng số người đã truy cập game
+- **📅 Người Chơi Hôm Nay**: Thống kê người chơi trong ngày
+- **🟢 Online Hiện Tại**: Số người đang online thực tế
+- **📱 Responsive Stats**: Thống kê hiển thị tối ưu trên PC, iPad và mobile
+- **📈 Tracking Thông Minh**: Hệ thống theo dõi dựa trên thời gian thực🌟 Đồ Họa Stunning**: Background động thay đổi theo level
 - **🎵 Hệ Thống Âm Thanh**: Audio toàn diện với nhạc nền và hiệu ứng
 - **💥 Hiệu Ứng Particle**: Nổ, power-ups và phản hồi visual
 - **🎪 Animation Mượt**: CSS animations với Animate.css
@@ -46,7 +50,8 @@ Một trò chơi phiêu lưu không gian hoành tráng được xây dựng bằ
 - **👥 Tổng Người Chơi**: Đếm tổng số người đã truy cập game
 - **📅 Người Chơi Hôm Nay**: Thống kê người chơi trong ngày
 - **🟢 Online Hiện Tại**: Số người đang online thực tế
-- **📈 Tracking Thông Minh**: Hệ thống theo dõi dựa trên thời gian thực
+- **� Responsive Stats**: Thống kê hiển thị tối ưu trên PC, iPad và mobile
+- **�📈 Tracking Thông Minh**: Hệ thống theo dõi dựa trên thời gian thực
 
 ## 🛠️ Công Nghệ Sử Dụng
 
