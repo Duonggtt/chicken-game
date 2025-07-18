@@ -80,32 +80,30 @@ export default {
     }
 
     const fetchStats = async () => {
-      // Try to get real statistics from cloud storage first
+      // Get real statistics from cloudStorageService (which uses real user tracking)
       try {
-        const cloudStats = await cloudStorageService.getStatistics()
-        stats.value = cloudStats
-        console.log('Stats updated from cloud storage:', cloudStats)
+        const realStats = await cloudStorageService.getStatistics()
+        stats.value = realStats
+        console.log('Stats updated from cloud storage service:', realStats)
         return
       } catch (error) {
-        console.warn('Cloud stats failed, using local calculation:', error)
+        console.warn('Cloud storage service failed, using basic fallback:', error)
       }
 
-      // Fallback to local realistic stats calculation
+      // Final fallback - basic real stats
       const now = new Date()
-      const daysSinceEpoch = Math.floor(now.getTime() / (24 * 60 * 60 * 1000))
       const hour = now.getHours()
-      const minute = now.getMinutes()
-      const timeInDay = hour * 60 + minute
-
-      const localStats = {
-        totalPlayers: 450 + (daysSinceEpoch * 15) + Math.floor(timeInDay / 10),
-        todayPlayers: Math.max(1, Math.floor((timeInDay / (24 * 60)) * 120) + Math.floor(minute / 5)),
-        onlinePlayers: Math.max(1, hour >= 6 && hour <= 23 ? Math.floor(Math.random() * 8) + 2 : 1),
-        lastUpdated: new Date().toISOString()
+      
+      const fallbackStats = {
+        totalPlayers: 1,
+        todayPlayers: 1,
+        onlinePlayers: 1,
+        lastUpdated: new Date().toISOString(),
+        source: 'fallback'
       }
       
-      stats.value = localStats
-      console.log('Stats updated with local calculation:', localStats)
+      stats.value = fallbackStats
+      console.log('Stats updated with fallback:', fallbackStats)
 
       // Try to fetch from API as final enhancement (optional)
       try {

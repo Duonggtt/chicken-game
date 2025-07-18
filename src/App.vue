@@ -61,7 +61,7 @@ import { gameStore } from './store/gameStore.js'
 import { gameEngine } from './engine/gameEngine.js'
 import { soundManager } from './services/soundManager.js'
 import { advancedSoundManager } from './services/advancedSoundManager.js'
-import userTracker from './services/userTracker.js'
+import { userTracker } from './services/userTracker.js'
 
 import LoadingScreen from './components/LoadingScreen.vue'
 import MainMenu from './components/MainMenu.vue'
@@ -129,7 +129,10 @@ export default {
       }
       
       // Track game start
-      userTracker.trackGameStart()
+      userTracker.trackAction('game_start', {
+        playerName: gameStore.playerName,
+        timestamp: new Date().toISOString()
+      })
       
       // Enable audio with user interaction
       console.log('Enabling sound managers...')
@@ -192,9 +195,10 @@ export default {
         score: gameStore.score,
         level: gameStore.level,
         duration: gameStore.gameTime,
-        chickensShot: gameStore.score // Approximate chickens shot from score
+        chickensShot: gameStore.score, // Approximate chickens shot from score
+        playerName: gameStore.playerName
       }
-      userTracker.trackGameEnd(gameStats)
+      userTracker.trackAction('game_end', gameStats)
       
       gameEngine.stop()
       gameStore.endGame()
