@@ -1,124 +1,222 @@
-# 🐔 Chicken Shooter Game 🚀
+# 🐔 Chicken Shooter - Game Bắn Gà Siêu Hấp Dẫn 🚀
 
-An epic space adventure game built with Vue.js where you pilot a spaceship to battle waves of chickens and powerful bosses!
+Một trò chơi phiêu lưu không gian hoành tráng được xây dựng bằng Vue.js, nơi bạn điều khiển phi thuyền để chiến đấu với làn sóng gà và các boss mạnh mẽ!
 
-## ✨ Features
+🎮 **[CHƠI NGAY TẠI ĐÂY](https://chicken-game-sigma.vercel.app/)** 🎮
 
-### 🎮 Gameplay
-- **Progressive Difficulty**: Exponential difficulty scaling with no upper limit
-- **Boss Battles**: Epic boss fights every 5 levels with unique mechanics
-- **Power-up System**: Collect special weapons (Rapid Fire, Spread Shot, Shield, Extra Life)
-- **Auto-targeting**: Spaceship follows mouse/touch input with automatic shooting
-- **Multiple Lives**: Start with 3 lives, earn more through power-ups
-- **Infinite Levels**: Unlimited gameplay with increasing challenges
+## ✨ Tính Năng Nổi Bật
 
-### 🎨 Visual & Audio
-- **Stunning Graphics**: Dynamic backgrounds that change with level progression
-- **Sound System**: Comprehensive audio with background music and sound effects
-- **Particle Effects**: Explosions, power-ups, and visual feedback
-- **Smooth Animations**: CSS animations and transitions using Animate.css
-- **Responsive Design**: Optimized for mobile, tablet, and desktop
+### � Gameplay Hấp Dẫn
+- **🔥 Độ Khó Tăng Dần**: Hệ thống difficulty scaling không giới hạn
+- **👹 Boss Battles**: Trận đánh boss epic sau mỗi 5 level với cơ chế độc đáo
+- **⚡ Hệ Thống Power-up**: Thu thập vũ khí đặc biệt (Rapid Fire, Spread Shot, Shield, Extra Life)
+- **🎯 Auto-targeting**: Phi thuyền theo dõi chuột/chạm với bắn tự động
+- **❤️ Nhiều Mạng**: Bắt đầu với 3 mạng, kiếm thêm qua power-ups
+- **♾️ Level Vô Hạn**: Gameplay không giới hạn với thử thách tăng dần
 
-### 🏆 Game Systems
-- **Leaderboard**: Local and online high score tracking
-- **Player Profiles**: Named player sessions with score persistence
-- **Settings**: Customizable audio, graphics, and gameplay options
-- **Pause System**: Full pause functionality with game state preservation
+### 🎨 Đồ Họa & Âm Thanh
+- **🌟 Đồ Họa Stunning**: Background động thay đổi theo level
+- **🎵 Hệ Thống Âm Thanh**: Audio toàn diện với nhạc nền và hiệu ứng
+- **💥 Hiệu Ứng Particle**: Nổ, power-ups và phản hồi visual
+- **🎪 Animation Mượt**: CSS animations với Animate.css
+- **📱 Responsive Design**: Tối ưu cho mobile, tablet và desktop
 
-## 🛠️ Technology Stack
+### 🏆 Hệ Thống Game
+- **📊 Bảng Xếp Hạng**: Lưu điểm cao local và online với MongoDB Atlas
+- **👤 Hồ Sơ Người Chơi**: Session có tên với lưu điểm liên tục
+- **📈 Thống Kê Thật**: Đếm số người chơi thực tế, không fake data
+- **⏸️ Hệ Thống Pause**: Tạm dừng hoàn chỉnh với bảo toàn trạng thái
 
-- **Frontend**: Vue.js 3 (Composition API)
-- **Styling**: TailwindCSS with custom game-specific classes
-- **Audio**: Howler.js for advanced sound management
-- **Animations**: Animate.css for smooth visual effects
-- **Utilities**: @vueuse/core for enhanced Vue reactivity
-- **Build Tool**: Vite for fast development and building
+### 📊 Thống Kê Người Dùng Thật
+- **👥 Tổng Người Chơi**: Đếm tổng số người đã truy cập game
+- **📅 Người Chơi Hôm Nay**: Thống kê người chơi trong ngày
+- **🟢 Online Hiện Tại**: Số người đang online thực tế
+- **📈 Tracking Thông Minh**: Hệ thống theo dõi dựa trên thời gian thực
 
-## 📱 Platform Support
+## 🛠️ Công Nghệ Sử Dụng
 
-- **Desktop**: Full keyboard and mouse support
-- **Mobile**: Touch-optimized controls with responsive UI
-- **Tablet**: Optimized for tablet-sized screens
-- **Progressive Web App**: Can be installed on devices
+### Frontend
+- **Vue.js 3**: Composition API với state management reactive
+- **TailwindCSS**: Styling system với custom game classes
+- **Vite**: Build tool nhanh cho development và production
 
-## 🚀 Quick Start
+### Audio & Effects
+- **Howler.js**: Quản lý âm thanh nâng cao
+- **Tone.js**: Synthesized sound fallback
+- **Animate.css**: Hiệu ứng animation mượt mà
 
-### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
+### Database & Deployment
+- **MongoDB Atlas**: Cloud database cho leaderboard và user tracking
+- **Vercel**: Serverless deployment với API functions
+- **GitHub**: Version control và CI/CD
 
-### Installation
+### APIs & Services
+- **Real-time Tracking**: User visit và game session tracking
+- **RESTful APIs**: `/api/scores`, `/api/leaderboard`, `/api/stats`, `/api/track`
+- **CORS Support**: Cross-origin requests cho production
 
-1. **Install dependencies**:
+## 🚀 Hướng Dẫn Cài Đặt
+
+### Yêu Cầu Hệ Thống
+- Node.js (v16 trở lên)
+- npm hoặc yarn
+- Git (cho clone repository)
+
+### Cài Đặt Local
+
+1. **Clone repository**:
+   ```bash
+   git clone https://github.com/Duonggtt/chicken-game.git
+   cd chicken-game
+   ```
+
+2. **Cài đặt dependencies**:
    ```bash
    npm install
    ```
 
-2. **Configure database** (optional):
-   - Edit `src/config/database.js`
-   - Add your database connection details
-   - Game works offline with localStorage if no database configured
+3. **Cấu hình database** (tùy chọn):
+   - Chỉnh sửa connection string trong `/api/scores.js` và `/api/leaderboard.js`
+   - Game hoạt động offline với localStorage nếu không có database
 
-3. **Add audio files** (optional):
-   - Place audio files in `public/sounds/` directory
-   - See `public/sounds/README.md` for required file names
-   - Game generates synthetic sounds if files are missing
-
-4. **Start development server**:
+4. **Chạy development server**:
    ```bash
    npm run dev
    ```
 
-5. **Build for production**:
+5. **Build cho production**:
    ```bash
    npm run build
    ```
 
-## 🎯 Game Controls
+### Deploy lên Vercel
 
-### Desktop
-- **Mouse**: Move spaceship
-- **Auto-shoot**: Automatic firing
-- **ESC**: Pause/unpause game
-- **Spacebar**: Manual shoot (if auto-shoot disabled)
+1. **Kết nối GitHub repository** với Vercel
+2. **Import project** từ GitHub
+3. **Configure environment variables** (nếu cần)
+4. **Deploy** - Vercel tự động build và deploy
 
-### Mobile/Touch
-- **Touch**: Move spaceship by touching screen
-- **Auto-shoot**: Automatic firing
-- **Touch controls**: All UI elements are touch-friendly
+## 🎮 Điều Khiển Game
 
-## ⚙️ Database Configuration
+### 🖥️ Desktop
+- **🖱️ Chuột**: Di chuyển phi thuyền
+- **🔫 Auto-shoot**: Bắn tự động
+- **⌨️ ESC**: Pause/unpause game
+- **⌨️ Spacebar**: Bắn thủ công (nếu tắt auto-shoot)
 
-Edit `src/config/database.js` with your database information:
+### 📱 Mobile/Touch
+- **👆 Chạm**: Di chuyển phi thuyền bằng cách chạm màn hình
+- **🔫 Auto-shoot**: Bắn tự động
+- **📱 Touch controls**: Tất cả UI elements đều touch-friendly
 
+## 🗄️ Cấu Hình Database
+
+### MongoDB Atlas (Production)
 ```javascript
-export const dbConfig = {
-  // MySQL/PostgreSQL
-  host: 'your-db-host',
-  port: 3306,
-  database: 'chicken_game',
-  username: 'your-username',
-  password: 'your-password',
-  
-  // Or API endpoint
-  apiBaseUrl: 'https://your-api.com/api',
-  
-  // Local storage (always works as fallback)
-  localStorageKey: 'chicken_game_scores'
+// Connection string trong API files
+const MONGO_URI = 'mongodb+srv://username:password@cluster.mongodb.net/chicken_game'
+```
+
+### Local Development
+```javascript
+// Fallback to localStorage
+const localStorageKey = 'chicken_game_scores'
+```
+
+## 📊 API Endpoints
+
+### 🎯 Game APIs
+- **POST** `/api/scores` - Lưu điểm game
+- **GET** `/api/leaderboard?limit=10` - Lấy bảng xếp hạng
+- **GET** `/api/stats` - Thống kê người chơi thật
+- **POST** `/api/track` - Track user visits và game sessions
+
+### � Tracking System
+```javascript
+// Track visit
+POST /api/track
+{
+  "action": "visit",
+  "userAgent": "browser info",
+  "sessionId": "unique_session_id"
+}
+
+// Track game start
+POST /api/track
+{
+  "action": "game_start",
+  "sessionId": "unique_session_id"
 }
 ```
 
-## 🎮 Game Features
+## 🎖️ Tính Năng Đặc Biệt
 
-- 🚀 Responsive spaceship controls
-- 🐔 Progressive chicken enemy spawning
-- 👹 Boss battles every 5 levels
-- ⚡ Power-up system with multiple weapon types
-- 🏆 Leaderboard with score persistence
-- 🎵 Dynamic audio system
-- 📱 Mobile-friendly responsive design
-- ⚙️ Customizable settings
+### 🏆 Bảng Xếp Hạng
+- **💾 Lưu MongoDB**: Điểm số được lưu vào cloud database
+- **🔄 Fallback System**: Tự động chuyển sang localStorage nếu API lỗi
+- **📝 Validation**: Kiểm tra tên người chơi và điểm số
+
+### 📊 Thống Kê Thực Tế
+- **👥 Real User Count**: Đếm người dùng thật, không fake
+- **⏰ Time-based**: Thống kê thay đổi theo giờ thực
+- **🔄 Auto Refresh**: Cập nhật mỗi 30 giây
+
+### 🎨 UI/UX
+- **🎭 Animation**: Smooth transitions với Animate.css
+- **📱 Responsive**: Hoàn hảo trên mọi device
+- **🌙 Dark Theme**: Giao diện tối gaming professional
+- **🎯 Accessibility**: Semantic HTML và keyboard support
+
+## 🔧 Cấu Trúc Project
+
+```
+chicken-game/
+├── api/                    # Vercel serverless functions
+│   ├── scores.js          # Save game scores
+│   ├── leaderboard.js     # Get leaderboard
+│   ├── stats.js           # User statistics
+│   └── track.js           # User tracking
+├── src/
+│   ├── components/        # Vue components
+│   ├── services/          # Business logic
+│   ├── store/            # State management
+│   └── engine/           # Game engine
+├── public/               # Static assets
+├── vercel.json          # Vercel configuration
+└── package.json         # Dependencies
+```
+
+## 🌟 Tính Năng Sắp Tới
+
+- [ ] Multiplayer mode
+- [ ] More power-up types
+- [ ] Achievement system
+- [ ] Social sharing
+- [ ] Tournament mode
+
+## 🤝 Đóng Góp
+
+1. Fork repository
+2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Mở Pull Request
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## 👨‍💻 Tác Giả
+
+**Designed by AI** - *Initial work* - [GitHub](https://github.com/Duonggtt/chicken-game)
+
+## 🌐 Links
+
+- **🎮 Live Demo**: [https://chicken-game-sigma.vercel.app/](https://chicken-game-sigma.vercel.app/)
+- **📦 Repository**: [https://github.com/Duonggtt/chicken-game](https://github.com/Duonggtt/chicken-game)
+- **🚀 Vercel**: Auto-deployed from GitHub
 
 ---
 
-**Ready to start your space adventure? Run `npm run dev` and enjoy! 🚀🐔**
+**🎮 Sẵn sàng bắt đầu cuộc phiêu lưu không gian? Chạy `npm run dev` và tận hưởng! 🚀🐔**
+**🎮 Sẵn sàng bắt đầu cuộc phiêu lưu không gian? Chạy `npm run dev` và tận hưởng! 🚀🐔**

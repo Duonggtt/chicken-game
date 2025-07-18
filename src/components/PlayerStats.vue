@@ -3,7 +3,7 @@
     <div class="text-sm space-y-2 min-w-[160px]">
       <!-- Header -->
       <div class="text-center text-yellow-400 font-bold text-xs mb-2 border-b border-yellow-400/30 pb-1">
-        📊 THỐNG KÊ GAME
+        📊 THỐNG KÊ THẬT
       </div>
       
       <!-- Total Players -->
@@ -81,6 +81,8 @@ export default {
                         'http://localhost:3000' : 
                         'https://chicken-game-sigma.vercel.app')
         
+        console.log('Fetching real user statistics from:', `${baseUrl}/api/stats`)
+        
         const response = await fetch(`${baseUrl}/api/stats`, {
           method: 'GET',
           headers: {
@@ -92,26 +94,31 @@ export default {
           const data = await response.json()
           if (data.success && data.stats) {
             stats.value = { ...data.stats }
-            console.log('Stats updated:', data.stats)
+            console.log('Real stats updated:', data.stats)
+            console.log('Debug info:', data.debug)
           }
         } else {
-          console.warn('Failed to fetch stats:', response.status)
-          // Use fallback data
-          stats.value = {
-            totalPlayers: Math.floor(Math.random() * 1000) + 500,
-            todayPlayers: Math.floor(Math.random() * 50) + 10,
-            onlinePlayers: Math.floor(Math.random() * 20) + 5,
-            lastUpdated: new Date().toISOString()
+          console.warn('Failed to fetch real stats:', response.status)
+          // Keep previous values on error instead of using fallback
+          if (!stats.value.totalPlayers) {
+            stats.value = {
+              totalPlayers: 1,
+              todayPlayers: 1,
+              onlinePlayers: 1,
+              lastUpdated: new Date().toISOString()
+            }
           }
         }
       } catch (error) {
-        console.error('Error fetching stats:', error)
-        // Use fallback data on error
-        stats.value = {
-          totalPlayers: Math.floor(Math.random() * 1000) + 500,
-          todayPlayers: Math.floor(Math.random() * 50) + 10,
-          onlinePlayers: Math.floor(Math.random() * 20) + 5,
-          lastUpdated: new Date().toISOString()
+        console.error('Error fetching real stats:', error)
+        // Keep previous values on error
+        if (!stats.value.totalPlayers) {
+          stats.value = {
+            totalPlayers: 1,
+            todayPlayers: 1,
+            onlinePlayers: 1,
+            lastUpdated: new Date().toISOString()
+          }
         }
       }
     }

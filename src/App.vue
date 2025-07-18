@@ -61,6 +61,7 @@ import { gameStore } from './store/gameStore.js'
 import { gameEngine } from './engine/gameEngine.js'
 import { soundManager } from './services/soundManager.js'
 import { advancedSoundManager } from './services/advancedSoundManager.js'
+import userTracker from './services/userTracker.js'
 
 import LoadingScreen from './components/LoadingScreen.vue'
 import MainMenu from './components/MainMenu.vue'
@@ -127,6 +128,9 @@ export default {
         return
       }
       
+      // Track game start
+      userTracker.trackGameStart()
+      
       // Enable audio with user interaction
       console.log('Enabling sound managers...')
       try {
@@ -183,6 +187,15 @@ export default {
     }
     
     const endGame = () => {
+      // Track game end with stats
+      const gameStats = {
+        score: gameStore.score,
+        level: gameStore.level,
+        duration: gameStore.gameTime,
+        chickensShot: gameStore.score // Approximate chickens shot from score
+      }
+      userTracker.trackGameEnd(gameStats)
+      
       gameEngine.stop()
       gameStore.endGame()
       // Play game over sound
