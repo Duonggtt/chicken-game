@@ -61,7 +61,7 @@ import { gameStore } from './store/gameStore.js'
 import { gameEngine } from './engine/gameEngine.js'
 import { soundManager } from './services/soundManager.js'
 import { advancedSoundManager } from './services/advancedSoundManager.js'
-import { userTracker } from './services/userTracker.js'
+// import { userTracker } from './services/userTracker.js' // Temporarily disabled for build
 
 import LoadingScreen from './components/LoadingScreen.vue'
 import MainMenu from './components/MainMenu.vue'
@@ -89,6 +89,23 @@ export default {
     const showNameModal = ref(false)
     const showLeaderboard = ref(false)
     const showSettings = ref(false)
+    
+    // Simple inline user tracking for build compatibility
+    const userTracker = {
+      trackAction: (action, data = {}) => {
+        console.log('Tracking action:', action, data)
+        // Store in localStorage for real tracking
+        const actions = JSON.parse(localStorage.getItem('game_actions') || '[]')
+        actions.push({
+          action,
+          data,
+          timestamp: new Date().toISOString()
+        })
+        // Keep only last 100 actions
+        const recentActions = actions.slice(-100)
+        localStorage.setItem('game_actions', JSON.stringify(recentActions))
+      }
+    }
     
     onMounted(() => {
       // Initialize screen size
