@@ -662,26 +662,32 @@ export class GameEngine {
       
       console.log(`Level ${gameStore.level} completed! Killed ${gameStore.chickensKilledThisLevel}/${gameStore.getChickensRequired()} chickens`)
       
-      // Clear remaining chickens and objects for smooth transition
+      // Pause game temporarily for level transition
+      gameStore.paused = true
+      
+      // Clear remaining chickens but keep bullets and effects for smooth visual
       gameStore.chickens = []
-      gameStore.bullets = []
-      gameStore.explosions = []
       gameStore.powerUps = []
       
-      gameStore.nextLevel()
-      try {
-        advancedSoundManager.play('levelUp')
-      } catch (error) {
-        soundManager.play('levelUp')
-      }
-      
-      if (gameStore.boss) {
+      // Show level transition and resume after delay
+      setTimeout(() => {
+        gameStore.nextLevel()
+        gameStore.paused = false
+        
         try {
-          advancedSoundManager.play('bossAppear')
+          advancedSoundManager.play('levelUp')
         } catch (error) {
-          soundManager.play('bossAppear')
+          soundManager.play('levelUp')
         }
-      }
+        
+        if (gameStore.boss) {
+          try {
+            advancedSoundManager.play('bossAppear')
+          } catch (error) {
+            soundManager.play('bossAppear')
+          }
+        }
+      }, 1000) // 1 second delay for level transition
     }
   }
 }

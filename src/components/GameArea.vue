@@ -22,13 +22,20 @@
       
       <div class="ui-center">
         <div v-if="gameStore.boss" class="boss-health">
+          <div class="boss-info">
+            <span class="text-red-300 text-lg font-bold">🐔 BOSS LEVEL {{ gameStore.boss.level }}</span>
+            <span class="text-red-200 text-sm">{{ gameStore.boss.health }}/{{ gameStore.boss.maxHealth }} HP</span>
+          </div>
           <div class="boss-health-bar">
             <div 
               class="boss-health-fill" 
-              :style="{ width: (gameStore.boss.health / gameStore.boss.maxHealth) * 100 + '%' }"
+              :style="{ 
+                width: (gameStore.boss.health / gameStore.boss.maxHealth) * 100 + '%',
+                backgroundColor: gameStore.boss.health > gameStore.boss.maxHealth * 0.5 ? '#ef4444' : 
+                                gameStore.boss.health > gameStore.boss.maxHealth * 0.25 ? '#f97316' : '#dc2626'
+              }"
             ></div>
           </div>
-          <span class="text-red-300 text-sm font-bold">BOSS</span>
         </div>
       </div>
       
@@ -321,15 +328,19 @@ export default {
 }
 
 .boss-health {
-  @apply flex flex-col items-center;
+  @apply flex flex-col items-center space-y-2 bg-black bg-opacity-60 rounded-lg p-3 backdrop-blur-sm;
+}
+
+.boss-info {
+  @apply flex flex-col items-center space-y-1;
 }
 
 .boss-health-bar {
-  @apply w-64 h-4 bg-red-900 rounded-full overflow-hidden border-2 border-red-500;
+  @apply w-80 h-6 bg-red-900 rounded-full overflow-hidden border-3 border-red-400 shadow-lg;
 }
 
 .boss-health-fill {
-  @apply h-full bg-gradient-to-r from-red-500 to-yellow-400 transition-all duration-300;
+  @apply h-full transition-all duration-500 ease-out shadow-inner;
 }
 
 .power-up-display {

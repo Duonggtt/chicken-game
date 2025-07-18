@@ -153,13 +153,13 @@ export const gameStore = reactive({
       y: 30,
       width: bossSize,
       height: bossSize,
-      health: this.level * 8 + 20, // Tăng máu theo level
-      maxHealth: this.level * 8 + 20,
+      health: this.level * 25 + 50, // Tăng mạnh máu theo level (Level 3: 125, Level 6: 200, Level 9: 275)
+      maxHealth: this.level * 25 + 50,
       speed: Math.min(1 + this.level * 0.3, 5), // Tăng tốc độ theo level
       direction: 1,
       lastShot: 0,
-      shotInterval: Math.max(800 - this.level * 50, 300), // Bắn nhanh hơn theo level
-      bulletCount: Math.min(3 + Math.floor(this.level / 3), 8), // Tăng số đạn theo level
+      shotInterval: Math.max(600 - this.level * 30, 200), // Bắn nhanh hơn theo level
+      bulletCount: Math.min(3 + Math.floor(this.level / 2), 10), // Tăng số đạn theo level
       type: 'chicken-boss', // Để nhận diện là boss gà
       level: this.level
     }
