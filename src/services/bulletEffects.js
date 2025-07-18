@@ -11,6 +11,10 @@ class BulletEffectsManager {
 
   // Create different types of bullets with unique effects
   createBullet(x, y, weaponType = 'normal') {
+    // Check if game area exists
+    const gameArea = document.querySelector('.game-area')
+    if (!gameArea) return null
+
     const bullet = {
       x: x,
       y: y,
@@ -25,7 +29,7 @@ class BulletEffectsManager {
     }
 
     // Add bullet to DOM
-    document.querySelector('.game-area').appendChild(bullet.element)
+    gameArea.appendChild(bullet.element)
     
     // Create muzzle flash
     this.createMuzzleFlash(x, y, weaponType)
@@ -135,7 +139,10 @@ class BulletEffectsManager {
 
     flash.style.background = colors[weaponType] || colors.normal
 
-    document.querySelector('.game-area').appendChild(flash)
+    const gameArea = document.querySelector('.game-area')
+    if (gameArea) {
+      gameArea.appendChild(flash)
+    }
 
     // Remove after animation
     setTimeout(() => {
@@ -149,6 +156,10 @@ class BulletEffectsManager {
   startBulletTrail(bullet) {
     const createTrailParticle = () => {
       if (!bullet.element.parentNode) return
+
+      // Check if game area still exists
+      const gameArea = document.querySelector('.game-area')
+      if (!gameArea) return
 
       const particle = document.createElement('div')
       particle.className = 'bullet-particle'
@@ -169,7 +180,7 @@ class BulletEffectsManager {
 
       particle.style.background = colors[bullet.type] || colors.normal
 
-      document.querySelector('.game-area').appendChild(particle)
+      gameArea.appendChild(particle)
 
       // Random particle movement
       const randomX = (Math.random() - 0.5) * 10
@@ -187,7 +198,9 @@ class BulletEffectsManager {
 
     // Create particles at intervals
     const trailInterval = setInterval(() => {
-      if (!bullet.element.parentNode) {
+      // Check if game area still exists
+      const gameArea = document.querySelector('.game-area')
+      if (!gameArea || !bullet.element.parentNode) {
         clearInterval(trailInterval)
         return
       }
@@ -219,7 +232,10 @@ class BulletEffectsManager {
 
     hitEffect.style.background = effects[weaponType] || effects.normal
 
-    document.querySelector('.game-area').appendChild(hitEffect)
+    const gameArea = document.querySelector('.game-area')
+    if (gameArea) {
+      gameArea.appendChild(hitEffect)
+    }
 
     // Create additional particles for explosive hits
     if (weaponType === 'explosive' || weaponType === 'power' || weaponType === 'charged') {
@@ -255,7 +271,10 @@ class BulletEffectsManager {
       particle.style.width = '3px'
       particle.style.height = '3px'
 
-      document.querySelector('.game-area').appendChild(particle)
+      const gameArea = document.querySelector('.game-area')
+      if (gameArea) {
+        gameArea.appendChild(particle)
+      }
 
       // Random explosion direction
       const angle = (i / particleCount) * Math.PI * 2
@@ -304,7 +323,10 @@ class BulletEffectsManager {
     trail.style.height = '5px'
     trail.style.zIndex = '97'
 
-    document.querySelector('.game-area').appendChild(trail)
+    const gameArea = document.querySelector('.game-area')
+    if (gameArea) {
+      gameArea.appendChild(trail)
+    }
 
     setTimeout(() => {
       if (trail.parentNode) {

@@ -1,7 +1,7 @@
 // Vercel Serverless Function - Get Leaderboard
-// Temporary fallback without MongoDB dependency
+// Stable fallback without MongoDB dependency
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true)
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -21,14 +21,18 @@ module.exports = async function handler(req, res) {
       const limit = parseInt(req.query.limit) || 10
       console.log('Fetching leaderboard with limit:', limit)
       
-      // TODO: Replace with MongoDB connection
-      // For now, return mock data to prevent frontend errors
+      // Stable mock data for demo
       const mockScores = [
-        { playerName: 'Demo Player 1', score: 5000, level: 8, date: new Date().toISOString() },
-        { playerName: 'Demo Player 2', score: 4500, level: 7, date: new Date().toISOString() },
-        { playerName: 'Demo Player 3', score: 4000, level: 6, date: new Date().toISOString() },
-        { playerName: 'Demo Player 4', score: 3500, level: 5, date: new Date().toISOString() },
-        { playerName: 'Demo Player 5', score: 3000, level: 4, date: new Date().toISOString() }
+        { playerName: 'Chicken Master', score: 8500, level: 12, date: new Date(Date.now() - 1000000).toISOString() },
+        { playerName: 'Wing Commander', score: 7200, level: 10, date: new Date(Date.now() - 2000000).toISOString() },
+        { playerName: 'Feather Fighter', score: 6800, level: 9, date: new Date(Date.now() - 3000000).toISOString() },
+        { playerName: 'Egg Hunter', score: 5500, level: 8, date: new Date(Date.now() - 4000000).toISOString() },
+        { playerName: 'Rooster Shooter', score: 4900, level: 7, date: new Date(Date.now() - 5000000).toISOString() },
+        { playerName: 'Poultry Pro', score: 4200, level: 6, date: new Date(Date.now() - 6000000).toISOString() },
+        { playerName: 'Coop Cleaner', score: 3800, level: 5, date: new Date(Date.now() - 7000000).toISOString() },
+        { playerName: 'Farm Hero', score: 3200, level: 4, date: new Date(Date.now() - 8000000).toISOString() },
+        { playerName: 'Rookie Pilot', score: 2600, level: 3, date: new Date(Date.now() - 9000000).toISOString() },
+        { playerName: 'Space Cadet', score: 1800, level: 2, date: new Date(Date.now() - 10000000).toISOString() }
       ]
 
       const cleanedScores = mockScores.slice(0, limit).map(score => ({

@@ -1,5 +1,5 @@
 // Vercel Serverless Function - Health Check
-module.exports = function handler(req, res) {
+export default function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true)
   res.setHeader('Access-Control-Allow-Origin', '*')

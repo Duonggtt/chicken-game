@@ -111,6 +111,9 @@ export class GameEngine {
   }
   
   shoot() {
+    // Don't shoot if game is not started
+    if (!gameStore.gameStarted) return
+    
     const spaceship = gameStore.spaceship
     const weaponType = gameStore.currentWeapon
     
@@ -120,6 +123,9 @@ export class GameEngine {
       spaceship.y,
       weaponType
     )
+    
+    // Check if bullet creation was successful
+    if (!bullet) return
     
     // Add to game store for collision detection
     const gameStoreBullet = {
@@ -252,7 +258,11 @@ export class GameEngine {
   }
 
   gameLoop(currentTime = performance.now()) {
-    if (!gameStore.gameStarted) return
+    if (!gameStore.gameStarted) {
+      // Stop the game loop if game is not started
+      this.stop()
+      return
+    }
     
     const deltaTime = currentTime - this.lastTime
     

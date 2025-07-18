@@ -1,15 +1,19 @@
 import dbConfig from '../config/database.js'
+import { cloudStorageService } from './cloudStorageService.js'
 
 class DatabaseService {
   constructor() {
     this.isOnline = navigator.onLine
     this.apiUrl = dbConfig.apiBaseUrl
     this.localStorageKey = dbConfig.localStorageKey
+    this.useCloudStorage = true // Enable cloud storage
     
     // Listen for online/offline events
     window.addEventListener('online', () => {
       this.isOnline = true
-      this.syncLocalData()
+      if (this.useCloudStorage) {
+        cloudStorageService.syncLocalData()
+      }
     })
     
     window.addEventListener('offline', () => {
@@ -27,42 +31,73 @@ class DatabaseService {
       sessionId: this.generateSessionId()
     }
 
+    // Try cloud storage first (for real multiplayer experience)
+    if (this.useCloudStorage) {
+      try {
+        const result = await cloudStorageService.saveScore(scoreData)
+        console.log('Score saved to cloud storage successfully!')
+        return result
+      } catch (error) {
+        console.warn('Cloud storage failed, trying API:', error)
+      }
+    }
+
+    // Fallback to API
     try {
       if (this.isOnline && this.apiUrl) {
-        // Gửi dữ liệu lên MongoDB qua API
-        const response = await this.sendToAPI(scoreData)
-        if (response.success) {
-          console.log('Score saved to database successfully')
-          return response
+        const response = await fetch(`${this.apiUrl}/scores`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(scoreData)
+        })
+        
+        if (response.ok) {
+          const result = await response.json()
+          console.log('Score saved to API successfully!')
+          return result
         }
       }
     } catch (error) {
-      console.warn('Failed to save to database, using localStorage:', error)
+      console.warn('API save failed, using localStorage:', error)
     }
-
-    // Fallback: Lưu vào localStorage
+    
+    // Final fallback: localStorage
     this.saveToLocalStorage(scoreData)
     return { success: true, local: true }
   }
 
   // Lấy bảng xếp hạng
   async getLeaderboard(limit = 10) {
+    // Try cloud storage first (for real multiplayer leaderboard)
+    if (this.useCloudStorage) {
+      try {
+        const result = await cloudStorageService.getLeaderboard(limit)
+        console.log('Leaderboard loaded from cloud storage:', result.source)
+        return result.scores
+      } catch (error) {
+        console.warn('Cloud leaderboard failed, trying API:', error)
+      }
+    }
+
+    // Fallback to API
     try {
       if (this.isOnline && this.apiUrl) {
-        // Lấy dữ liệu từ MongoDB qua API
         const response = await fetch(`${this.apiUrl}/leaderboard?limit=${limit}`)
         if (response.ok) {
           const data = await response.json()
-          console.log('Leaderboard loaded from database')
-          return data.scores || []
+          const apiScores = data.scores || []
+          console.log('Leaderboard loaded from API')
+          return apiScores
         }
       }
     } catch (error) {
-      console.warn('Failed to load from database, using localStorage:', error)
+      console.warn('API leaderboard failed, using localStorage:', error)
     }
 
-    // Fallback: Lấy từ localStorage
-    return this.getFromLocalStorage()
+    // Final fallback: localStorage
+    return this.getFromLocalStorage().slice(0, limit)
   }
 
   // Gửi dữ liệu lên API
