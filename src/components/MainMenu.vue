@@ -1,5 +1,8 @@
 <template>
   <div class="main-menu">
+    <!-- Player Statistics -->
+    <PlayerStats />
+    
     <div class="menu-background">
       <!-- Animated stars -->
       <div class="stars">
@@ -106,8 +109,13 @@
 </template>
 
 <script>
+import PlayerStats from './PlayerStats.vue'
+
 export default {
   name: 'MainMenu',
+  components: {
+    PlayerStats
+  },
   emits: ['start-game', 'show-leaderboard', 'show-settings'],
   setup() {
     const getStarStyle = (index) => {
