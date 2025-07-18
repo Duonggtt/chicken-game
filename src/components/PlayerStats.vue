@@ -1,21 +1,42 @@
 <template>
-  <div class="fixed top-4 right-4 z-50 bg-black/80 text-white px-4 py-2 rounded-lg backdrop-blur-sm border border-yellow-400/30">
-    <div class="text-xs space-y-1">
-      <div class="flex items-center gap-2">
-        <span class="text-green-400">●</span>
-        <span>Người chơi: {{ stats.totalPlayers || '---' }}</span>
+  <div class="fixed top-4 right-4 z-50 bg-gradient-to-br from-black/90 via-gray-900/80 to-black/90 text-white px-4 py-3 rounded-xl backdrop-blur-md border border-yellow-400/40 shadow-2xl">
+    <div class="text-sm space-y-2 min-w-[160px]">
+      <!-- Header -->
+      <div class="text-center text-yellow-400 font-bold text-xs mb-2 border-b border-yellow-400/30 pb-1">
+        📊 THỐNG KÊ GAME
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-blue-400">●</span>
-        <span>Hôm nay: {{ stats.todayPlayers || '---' }}</span>
+      
+      <!-- Total Players -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-green-400 text-lg">👥</span>
+          <span class="text-xs">Tổng:</span>
+        </div>
+        <span class="font-bold text-green-400">{{ formatNumber(stats.totalPlayers) }}</span>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-yellow-400 animate-pulse">●</span>
-        <span>Online: {{ stats.onlinePlayers || '---' }}</span>
+      
+      <!-- Today Players -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-blue-400 text-lg">📅</span>
+          <span class="text-xs">Hôm nay:</span>
+        </div>
+        <span class="font-bold text-blue-400">{{ formatNumber(stats.todayPlayers) }}</span>
       </div>
-    </div>
-    <div class="text-xs text-gray-400 mt-1 text-center">
-      {{ lastUpdated }}
+      
+      <!-- Online Players -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-yellow-400 text-lg animate-pulse">🟡</span>
+          <span class="text-xs">Online:</span>
+        </div>
+        <span class="font-bold text-yellow-400">{{ formatNumber(stats.onlinePlayers) }}</span>
+      </div>
+      
+      <!-- Last Updated -->
+      <div class="text-xs text-gray-400 text-center pt-2 border-t border-gray-600/30">
+        <span class="text-xs">Cập nhật: {{ lastUpdated }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -43,6 +64,14 @@ export default {
     })
 
     let updateInterval = null
+
+    const formatNumber = (num) => {
+      if (!num && num !== 0) return '---'
+      if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'k'
+      }
+      return num.toString()
+    }
 
     const fetchStats = async () => {
       try {
@@ -103,7 +132,8 @@ export default {
 
     return {
       stats,
-      lastUpdated
+      lastUpdated,
+      formatNumber
     }
   }
 }
