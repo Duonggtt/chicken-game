@@ -577,11 +577,17 @@ export class GameEngine {
   }
   
   checkLevelComplete() {
-    // Kiểm tra đã giết đủ gà và không còn gà trên màn hình
+    // Kiểm tra đã giết đủ gà theo yêu cầu
     if (gameStore.chickensKilledThisLevel >= gameStore.getChickensRequired() && 
-        gameStore.chickens.length === 0 && 
-        !gameStore.boss && 
-        Date.now() - this.lastChickenSpawn > 3000) {
+        !gameStore.boss) {
+      
+      console.log(`Level ${gameStore.level} completed! Killed ${gameStore.chickensKilledThisLevel}/${gameStore.getChickensRequired()} chickens`)
+      
+      // Clear remaining chickens and objects for smooth transition
+      gameStore.chickens = []
+      gameStore.bullets = []
+      gameStore.explosions = []
+      gameStore.powerUps = []
       
       gameStore.nextLevel()
       try {
