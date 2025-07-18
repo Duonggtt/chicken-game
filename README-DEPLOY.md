@@ -18,10 +18,10 @@ git add .
 git commit -m "Initial commit: Chicken Shooter Game with MongoDB integration"
 
 # Push lên GitHub
-git push -u origin main
+git push -u origin master
 ```
 
-### 2. Deploy Backend lên Vercel
+### 2. Deploy lên Vercel với Serverless Functions
 
 ```bash
 # Cài đặt Vercel CLI (nếu chưa có)
@@ -30,30 +30,32 @@ npm i -g vercel
 # Đăng nhập Vercel
 vercel login
 
-# Deploy backend
-cd backend
+# Deploy project (bao gồm cả frontend và API)
 vercel --prod
 
-# Lưu lại URL backend (ví dụ: https://chicken-game-backend.vercel.app)
+# Domain example: https://chicken-game-sigma.vercel.app/
 ```
 
 ### 3. Cập nhật API URL trong Frontend
 
-Sau khi có URL backend từ Vercel, cập nhật file `src/config/database.js`:
+API đã được cấu hình để sử dụng Vercel Serverless Functions:
 
 ```javascript
+// Trong src/config/database.js
 apiBaseUrl: process.env.NODE_ENV === 'production' 
-  ? 'https://YOUR-BACKEND-URL.vercel.app/api'  // Thay YOUR-BACKEND-URL
-  : 'http://localhost:3001/api'
+  ? 'https://chicken-game-sigma.vercel.app/api'  // Production URL trên Vercel
+  : 'http://localhost:3001/api'  // Local development
 ```
 
-### 4. Deploy Frontend lên Vercel
+API Endpoints available:
+- `https://chicken-game-sigma.vercel.app/api/health` - Health check
+- `https://chicken-game-sigma.vercel.app/api/scores` - Save scores
+- `https://chicken-game-sigma.vercel.app/api/leaderboard` - Get leaderboard
+
+### 4. Deploy lên Vercel
 
 ```bash
-# Quay về root directory
-cd ..
-
-# Deploy frontend
+# Deploy toàn bộ project (frontend + API)
 vercel --prod
 ```
 

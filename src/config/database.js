@@ -16,8 +16,8 @@ export const dbConfig = {
   mongoUri: 'mongodb+srv://admin:sqk5b4DcnOpXqq2n@chicken-game.kvugxpb.mongodb.net/chicken_game',
   
   // API endpoint cho backend (nếu có)
-  apiBaseUrl: process.env.NODE_ENV === 'production' 
-    ? 'https://chicken-game-backend.vercel.app/api'  // Production URL (sẽ cập nhật sau khi deploy)
+  apiBaseUrl: typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')
+    ? 'https://chicken-game-sigma.vercel.app/api'  // Production URL trên Vercel
     : 'http://localhost:3001/api', // Local development
   
   // Local storage key cho offline mode
