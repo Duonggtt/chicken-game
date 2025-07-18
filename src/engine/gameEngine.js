@@ -21,13 +21,13 @@ export class GameEngine {
     this.isTablet = /iPad|Android(?=.*\bMobile\b)(?=.*\bSafari\b)|Android(?=.*\bSafari\b)/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
     
-    // Much more aggressive performance settings to fix lag
-    this.mouseMoveThrottle = this.isMobile ? 16 : 8 // Much more responsive: 60fps mobile, 120fps desktop
-    this.gameLoopThrottle = this.isMobile ? 50 : 33 // 20fps for mobile, 30fps for desktop
-    this.maxExplosions = this.isMobile ? 3 : 8 // Reduce explosions significantly
-    this.maxBullets = this.isMobile ? 15 : 50 // Reduce bullets significantly
-    this.particleCount = this.isMobile ? 0.1 : 0.5 // Much fewer particles
-    this.maxChickens = this.isMobile ? 8 : 20 // Limit chickens on screen
+    // Enhanced performance settings for intensive gameplay
+    this.mouseMoveThrottle = this.isMobile ? 12 : 6 // More responsive for fast gameplay
+    this.gameLoopThrottle = this.isMobile ? 40 : 25 // 25fps mobile, 40fps desktop for smoother action
+    this.maxExplosions = this.isMobile ? 5 : 12 // More explosions for visual impact
+    this.maxBullets = this.isMobile ? 25 : 80 // More bullets for intense gameplay
+    this.particleCount = this.isMobile ? 0.3 : 0.8 // More particles for better effects
+    this.maxChickens = this.isMobile ? 15 : 35 // Allow more chickens for challenge
     
     // Frame skipping for very low-end devices
     this.frameSkip = this.isMobile ? 2 : 1
@@ -87,8 +87,10 @@ export class GameEngine {
     const spaceship = gameStore.spaceship
     const margin = 10
     
-    // Much more responsive interpolation - nearly instant on desktop
-    const lerpFactor = this.isMobile ? 0.4 : 0.6 // Much faster response
+    // More responsive interpolation with level-based speed boost
+    const levelSpeedBonus = 1 + (gameStore.level * 0.03) // 3% faster each level
+    const baseLerpFactor = this.isMobile ? 0.4 : 0.6
+    const lerpFactor = Math.min(baseLerpFactor * levelSpeedBonus, 0.95) // Max 0.95 for stability
     
     // Calculate target position with boundaries
     const targetX = Math.max(margin, Math.min(this.targetX - spaceship.width / 2, gameStore.screenWidth - spaceship.width - margin))
@@ -117,9 +119,11 @@ export class GameEngine {
   }
   
   startAutoShoot() {
-    // Much slower shooting to reduce CPU load and lag
-    const baseInterval = gameStore.currentWeapon === 'rapid' ? 150 : 400 // Increased intervals
-    const shootInterval = this.isMobile ? baseInterval * 2 : baseInterval * 1.2 // Even slower on mobile
+    // Dynamic shooting speed based on level - faster each level
+    const levelSpeedBonus = Math.max(0.7, 1 - (gameStore.level * 0.08)) // Faster each level, minimum 0.7x
+    const baseInterval = gameStore.currentWeapon === 'rapid' ? 100 : 250 // Base intervals
+    const levelAdjustedInterval = baseInterval * levelSpeedBonus
+    const shootInterval = this.isMobile ? levelAdjustedInterval * 1.3 : levelAdjustedInterval
     
     this.autoShootInterval = setInterval(() => {
       if (gameStore.gameStarted && !gameStore.paused) {
@@ -323,37 +327,121 @@ export class GameEngine {
   spawnChickens(currentTime) {
     if (gameStore.boss) return // No chickens during boss fight
     
-    // Limit total chickens on screen for performance
-    if (gameStore.chickens.length >= this.maxChickens) return
+    // Dramatically increase chicken count each level
+    const maxChickensOnScreen = Math.min(
+      this.isMobile ? 15 : 35, // Higher base limits
+      5 + (gameStore.level * 3) // 3 more chickens per level
+    )
     
-    // Apply difficulty multiplier from settings with performance consideration
+    if (gameStore.chickens.length >= maxChickensOnScreen) return
+    
+    // Much faster spawn rate that decreases with level
     const baseSpawnRate = gameStore.difficulty.spawnRate * (gameStore.difficulty.spawnRateMultiplier || 1.0)
-    const spawnRate = this.isMobile ? baseSpawnRate * 1.5 : baseSpawnRate // Slower spawn on mobile
+    const levelSpawnMultiplier = Math.max(0.3, 1 - (gameStore.level * 0.05)) // 5% faster each level, min 0.3x
+    const spawnRate = baseSpawnRate * levelSpawnMultiplier
     
     if (currentTime - this.lastChickenSpawn > spawnRate) {
-      // Reduce chickens spawned at once for performance
-      const baseChickens = this.isMobile ? 1 : 2 // Only 1 chicken on mobile
-      const extraChickens = this.isMobile ? 0 : Math.floor(gameStore.level / 3) // Less scaling on mobile
-      const chickensToSpawn = Math.min(baseChickens + extraChickens, this.isMobile ? 2 : 4) // Max 2 on mobile, 4 on desktop
+      // Exponential chicken spawning - double every few levels
+      const baseChickens = this.isMobile ? 2 : 4 // Higher base
+      const levelMultiplier = Math.floor(1 + Math.pow(gameStore.level, 1.3) * 0.15) // Exponential growth
+      const chickensToSpawn = Math.min(
+        baseChickens * levelMultiplier,
+        this.isMobile ? 8 : 15 // Higher caps
+      )
       
-      for (let i = 0; i < chickensToSpawn; i++) {
-        const chicken = {
-          id: Date.now() + Math.random() + i,
-          x: Math.random() * (gameStore.screenWidth - 40),
-          y: -40 - (i * 50), // Spread vertical position để không overlap
-          width: 40,
-          height: 30,
-          speed: gameStore.difficulty.chickenSpeed + Math.random() * 2,
-          health: Math.floor(gameStore.level / 3) + 1,
-          maxHealth: Math.floor(gameStore.level / 3) + 1,
-          zigzag: this.isMobile ? false : Math.random() > 0.7, // Disable zigzag on mobile for performance
-          zigzagDirection: 1
-        }
-        
-        gameStore.chickens.push(chicken)
+      // Create formation patterns for flocking behavior
+      const formationTypes = ['line', 'v-formation', 'cluster', 'wave', 'scattered']
+      const formation = formationTypes[Math.floor(Math.random() * formationTypes.length)]
+      
+      this.spawnChickenFormation(formation, chickensToSpawn)
+      this.lastChickenSpawn = currentTime
+    }
+  }
+  
+  spawnChickenFormation(formation, count) {
+    const baseY = -60 - Math.random() * 100
+    const centerX = gameStore.screenWidth / 2
+    const flockId = Date.now() + Math.random() // Unique flock ID
+    
+    // Bigger chickens that scale with level
+    const baseSize = 50 + Math.floor(gameStore.level * 2) // Start at 50px, grow 2px per level
+    const chickenWidth = Math.min(baseSize, 80) // Max 80px width
+    const chickenHeight = Math.min(baseSize * 0.75, 60) // Max 60px height
+    
+    // Enhanced speed that increases with level
+    const baseSpeed = gameStore.difficulty.chickenSpeed + (gameStore.level * 0.3)
+    
+    for (let i = 0; i < count; i++) {
+      let x, y, flockRole
+      
+      switch (formation) {
+        case 'line':
+          x = (gameStore.screenWidth / (count + 1)) * (i + 1) - chickenWidth / 2
+          y = baseY
+          flockRole = 'follower'
+          break
+          
+        case 'v-formation':
+          const isLeft = i % 2 === 0
+          const offset = Math.floor(i / 2) + 1
+          x = centerX + (isLeft ? -offset : offset) * 60 - chickenWidth / 2
+          y = baseY - offset * 30
+          flockRole = i === 0 ? 'leader' : 'follower'
+          break
+          
+        case 'cluster':
+          const angle = (i / count) * 2 * Math.PI
+          const radius = 80 + Math.random() * 40
+          x = centerX + Math.cos(angle) * radius - chickenWidth / 2
+          y = baseY + Math.sin(angle) * radius * 0.3
+          flockRole = 'follower'
+          break
+          
+        case 'wave':
+          x = (gameStore.screenWidth / count) * i + Math.random() * 40 - chickenWidth / 2
+          y = baseY + Math.sin((i / count) * Math.PI * 2) * 50
+          flockRole = 'follower'
+          break
+          
+        default: // scattered
+          x = Math.random() * (gameStore.screenWidth - chickenWidth)
+          y = baseY + Math.random() * 100
+          flockRole = Math.random() > 0.7 ? 'leader' : 'solo'
+          break
       }
       
-      this.lastChickenSpawn = currentTime
+      const chicken = {
+        id: Date.now() + Math.random() + i,
+        x: Math.max(0, Math.min(x, gameStore.screenWidth - chickenWidth)),
+        y: y,
+        width: chickenWidth,
+        height: chickenHeight,
+        speed: baseSpeed + Math.random() * 1.5, // More speed variation
+        health: Math.max(1, Math.floor(gameStore.level / 2) + 1), // Scale health with level
+        maxHealth: Math.max(1, Math.floor(gameStore.level / 2) + 1),
+        
+        // Flocking behavior properties
+        flockId: flockId,
+        flockRole: flockRole, // 'leader', 'follower', 'solo'
+        formation: formation,
+        originalIndex: i,
+        
+        // Enhanced movement properties
+        zigzag: Math.random() > 0.5,
+        zigzagDirection: Math.random() > 0.5 ? 1 : -1,
+        zigzagSpeed: 1 + Math.random() * 2,
+        
+        // Diving behavior
+        isDiving: false,
+        diveTarget: null,
+        diveSpeed: baseSpeed * 1.8,
+        
+        // Leader following
+        followTarget: null,
+        followDistance: 40 + Math.random() * 20
+      }
+      
+      gameStore.chickens.push(chicken)
     }
   }
   
@@ -393,7 +481,24 @@ export class GameEngine {
           bullet.y = parseFloat(bullet.element.style.top) || bullet.y
         }
       } else {
-        // Boss/enemy bullets - update position manually
+        // Boss/enemy bullets - update position manually with enhanced behavior
+        if (bullet.subtype === 'homing' && gameStore.spaceship) {
+          // Homing missile behavior
+          const player = gameStore.spaceship
+          const dx = (player.x + player.width / 2) - bullet.x
+          const dy = (player.y + player.height / 2) - bullet.y
+          const distance = Math.sqrt(dx * dx + dy * dy)
+          
+          if (distance > 0) {
+            // Adjust velocity towards player
+            const targetVelX = (dx / distance) * bullet.speed
+            const targetVelY = (dy / distance) * bullet.speed
+            
+            bullet.velocityX += (targetVelX - bullet.velocityX) * bullet.homingStrength
+            bullet.velocityY += (targetVelY - bullet.velocityY) * bullet.homingStrength
+          }
+        }
+        
         if (bullet.velocityX !== undefined && bullet.velocityY !== undefined) {
           bullet.x += bullet.velocityX * (deltaTime / 16)
           bullet.y += bullet.velocityY * (deltaTime / 16)
@@ -403,8 +508,8 @@ export class GameEngine {
       }
       
       // Remove bullets that are off screen
-      const inBounds = bullet.y > -10 && bullet.y < gameStore.screenHeight + 10 && 
-                      bullet.x > -10 && bullet.x < gameStore.screenWidth + 10
+      const inBounds = bullet.y > -30 && bullet.y < gameStore.screenHeight + 30 && 
+                      bullet.x > -30 && bullet.x < gameStore.screenWidth + 30
       
       if (!inBounds) {
         if (bullet.type !== 'enemy' && bullet.element) {
@@ -419,23 +524,112 @@ export class GameEngine {
   
   updateChickens(deltaTime) {
     gameStore.chickens = gameStore.chickens.filter(chicken => {
-      chicken.y += chicken.speed * (deltaTime / 16)
+      // Advanced flocking behavior with level-based speed
+      this.updateChickenFlockBehavior(chicken, deltaTime)
       
-      // Zigzag movement
-      if (chicken.zigzag) {
-        chicken.x += chicken.zigzagDirection * 2 * (deltaTime / 16)
+      // Basic downward movement with level speed bonus
+      const levelSpeedMultiplier = 1 + (gameStore.level * 0.2) // 20% faster each level
+      chicken.y += chicken.speed * levelSpeedMultiplier * (deltaTime / 16)
+      
+      // Enhanced zigzag movement
+      if (chicken.zigzag && !chicken.isDiving) {
+        const zigzagStrength = chicken.zigzagSpeed * levelSpeedMultiplier
+        chicken.x += chicken.zigzagDirection * zigzagStrength * (deltaTime / 16)
+        
+        // Bounce off walls
         if (chicken.x <= 0 || chicken.x >= gameStore.screenWidth - chicken.width) {
+          chicken.zigzagDirection *= -1
+        }
+        
+        // Random direction changes for more organic movement
+        if (Math.random() < 0.002) {
           chicken.zigzagDirection *= -1
         }
       }
       
+      // Occasional diving behavior towards player
+      if (!chicken.isDiving && Math.random() < 0.001 * gameStore.level) {
+        chicken.isDiving = true
+        chicken.diveTarget = {
+          x: gameStore.spaceship.x + gameStore.spaceship.width / 2,
+          y: gameStore.spaceship.y
+        }
+      }
+      
+      // Execute diving behavior
+      if (chicken.isDiving && chicken.diveTarget) {
+        const dx = chicken.diveTarget.x - chicken.x
+        const dy = chicken.diveTarget.y - chicken.y
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        
+        if (distance > 10) {
+          chicken.x += (dx / distance) * chicken.diveSpeed * (deltaTime / 16)
+          chicken.y += (dy / distance) * chicken.diveSpeed * (deltaTime / 16)
+        } else {
+          chicken.isDiving = false
+          chicken.diveTarget = null
+        }
+      }
+      
       // Remove if off screen
-      if (chicken.y > gameStore.screenHeight) {
+      if (chicken.y > gameStore.screenHeight + 50) {
         return false
       }
       
       return true
     })
+  }
+  
+  updateChickenFlockBehavior(chicken, deltaTime) {
+    if (chicken.flockRole === 'solo') return
+    
+    const flockMates = gameStore.chickens.filter(c => 
+      c.flockId === chicken.flockId && c.id !== chicken.id
+    )
+    
+    if (flockMates.length === 0) return
+    
+    if (chicken.flockRole === 'follower') {
+      // Find leader or follow formation
+      let target = flockMates.find(c => c.flockRole === 'leader')
+      
+      if (!target && chicken.formation === 'v-formation') {
+        // Follow the chicken ahead in formation
+        target = flockMates.find(c => c.originalIndex === chicken.originalIndex - 1)
+      }
+      
+      if (target) {
+        const dx = target.x - chicken.x
+        const dy = target.y - chicken.y
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        
+        // Maintain formation distance
+        if (distance > chicken.followDistance) {
+          const pullStrength = 0.3 + (gameStore.level * 0.02) // Stronger pull at higher levels
+          chicken.x += (dx / distance) * pullStrength * (deltaTime / 16)
+          chicken.y += (dy / distance) * pullStrength * (deltaTime / 16)
+        }
+        
+        // Separation - avoid collision with flock mates
+        flockMates.forEach(mate => {
+          const mdx = mate.x - chicken.x
+          const mdy = mate.y - chicken.y
+          const mdist = Math.sqrt(mdx * mdx + mdy * mdy)
+          
+          if (mdist < 30 && mdist > 0) {
+            const repelStrength = 0.5
+            chicken.x -= (mdx / mdist) * repelStrength * (deltaTime / 16)
+            chicken.y -= (mdy / mdist) * repelStrength * (deltaTime / 16)
+          }
+        })
+      }
+    }
+    
+    // Leaders occasionally change direction to add variety
+    if (chicken.flockRole === 'leader' && Math.random() < 0.001) {
+      chicken.zigzagDirection *= -1
+      chicken.zigzagSpeed = 1 + Math.random() * 3
+    }
   }
   
   updateBoss(deltaTime) {
@@ -531,10 +725,11 @@ export class GameEngine {
   }
   
   bosShoot() {
-    // Boss shoots multiple bullets downward
+    // Boss shoots multiple bullets downward with increased difficulty
     const boss = gameStore.boss
-    const bulletCount = boss.bulletCount || 3
-    const spreadAngle = 60 // Góc phân tán đạn
+    const levelDifficultyMultiplier = 1 + (gameStore.level * 0.15) // 15% more bullets per level
+    const bulletCount = Math.floor((boss.bulletCount || 3) * levelDifficultyMultiplier)
+    const spreadAngle = 80 + (gameStore.level * 5) // Wider spread at higher levels
     
     for (let i = 0; i < bulletCount; i++) {
       // Tính toán vị trí và góc bắn
@@ -542,19 +737,30 @@ export class GameEngine {
       const angle = -spreadAngle / 2 + (i * angleStep)
       const radians = (angle * Math.PI) / 180
       
+      // Enhanced bullet speed based on level
+      const baseSpeed = 4 + Math.floor(gameStore.level * 0.5) // Faster bullets each level
+      const speedVariation = 1 + Math.random() * 2
+      const bulletSpeed = baseSpeed + speedVariation
+      
       const bullet = {
         id: Date.now() + Math.random() + i,
-        x: boss.x + boss.width / 2 - 3,
+        x: boss.x + boss.width / 2 - 4,
         y: boss.y + boss.height,
-        width: 6,
-        height: 12,
-        speed: 5 + Math.floor(gameStore.level / 2), // Tốc độ tăng theo level
-        velocityX: Math.sin(radians) * (5 + Math.floor(gameStore.level / 2)),
-        velocityY: Math.cos(radians) * (5 + Math.floor(gameStore.level / 2)),
+        width: 8,
+        height: 15,
+        speed: bulletSpeed,
+        velocityX: Math.sin(radians) * bulletSpeed,
+        velocityY: Math.cos(radians) * bulletSpeed,
         type: 'enemy',
-        color: '#ff4444' // Đạn đỏ của boss
+        color: '#ff3333', // Brighter red for boss bullets
+        damage: 0.5 + (gameStore.level * 0.1) // More damage at higher levels
       }
       gameStore.bullets.push(bullet)
+    }
+    
+    // Boss occasionally fires homing missiles at higher levels
+    if (gameStore.level >= 5 && Math.random() < 0.3) {
+      this.bossFireHomingMissile()
     }
     
     // Play boss shoot sound
@@ -563,6 +769,34 @@ export class GameEngine {
     } catch (error) {
       soundManager.play('explosion')
     }
+  }
+  
+  bossFireHomingMissile() {
+    const boss = gameStore.boss
+    const player = gameStore.spaceship
+    
+    // Calculate direction to player
+    const dx = (player.x + player.width / 2) - (boss.x + boss.width / 2)
+    const dy = (player.y + player.height / 2) - (boss.y + boss.height)
+    const distance = Math.sqrt(dx * dx + dy * dy)
+    
+    const missile = {
+      id: Date.now() + Math.random(),
+      x: boss.x + boss.width / 2 - 6,
+      y: boss.y + boss.height,
+      width: 12,
+      height: 20,
+      speed: 3 + gameStore.level * 0.2,
+      velocityX: (dx / distance) * (3 + gameStore.level * 0.2),
+      velocityY: (dy / distance) * (3 + gameStore.level * 0.2),
+      type: 'enemy',
+      subtype: 'homing',
+      color: '#ff6600', // Orange for homing missiles
+      damage: 1.0,
+      homingStrength: 0.1 + (gameStore.level * 0.01) // Stronger homing at higher levels
+    }
+    
+    gameStore.bullets.push(missile)
   }
   
   updateExplosions(deltaTime) {
@@ -791,7 +1025,9 @@ export class GameEngine {
   }
   
   resetAutoShoot() {
-    clearInterval(this.autoShootInterval)
+    if (this.autoShootInterval) {
+      clearInterval(this.autoShootInterval)
+    }
     this.startAutoShoot()
   }
   
@@ -825,9 +1061,9 @@ export class GameEngine {
     }
   }
   
-  // Aggressive cleanup method to prevent memory issues and lag
+  // Enhanced cleanup method for intensive gameplay
   cleanupArrays() {
-    // Limit bullets more aggressively
+    // Limit bullets more generously for action gameplay
     if (gameStore.bullets.length > this.maxBullets) {
       gameStore.bullets = gameStore.bullets.slice(-this.maxBullets)
     }
@@ -837,7 +1073,7 @@ export class GameEngine {
       gameStore.explosions = gameStore.explosions.slice(-this.maxExplosions)
     }
     
-    // Limit chickens
+    // Limit chickens to prevent overwhelming
     if (gameStore.chickens.length > this.maxChickens) {
       gameStore.chickens = gameStore.chickens.slice(-this.maxChickens)
     }

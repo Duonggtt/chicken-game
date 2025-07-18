@@ -16,19 +16,19 @@ export const gameStore = reactive({
   score: 0,
   lives: 3,
   chickensKilledThisLevel: 0,
-  // Số gà cần giết giữ nguyên mức vừa phải
+  // Số gà cần giết tăng mạnh hơn để phù hợp với spawn nhiều hơn
   getChickensRequired() {
-    // Level 1: 15 gà, Level 2: 20 gà, Level 3: 25 gà, Level 10: 60 gà
-    return Math.floor(15 + (this.level * 5)) // Tăng 5 gà mỗi level
+    // Level 1: 25 gà, Level 2: 35 gà, Level 3: 50 gà, Level 5: 80 gà
+    return Math.floor(25 + (this.level * 10) + Math.pow(this.level, 1.5) * 2)
   },
   
   // Difficulty scaling
   difficulty: {
-    chickenSpeed: 1,
-    spawnRate: 800, // Giảm từ 1500 xuống 800ms để spawn nhanh hơn ngay từ đầu
-    bossLevel: 3, // Boss xuất hiện mỗi 3 level thay vì 10
-    speedMultiplier: 1.2,
-    spawnRateDecrease: 0.75, // Giảm từ 0.85 xuống 0.75 để spawn nhanh hơn mỗi level
+    chickenSpeed: 1.5, // Tăng tốc độ base từ 1 lên 1.5
+    spawnRate: 600, // Giảm từ 800 xuống 600ms để spawn nhanh hơn
+    bossLevel: 3, // Boss xuất hiện mỗi 3 level
+    speedMultiplier: 1.25, // Tăng từ 1.2 lên 1.25 để tăng tốc độ mạnh hơn
+    spawnRateDecrease: 0.7, // Giảm từ 0.75 xuống 0.7 để spawn nhanh hơn mỗi level
     // Settings modifiers
     chickenSpeedMultiplier: 1.0,
     spawnRateMultiplier: 1.0,
@@ -123,20 +123,20 @@ export const gameStore = reactive({
   },
   
   resetDifficulty() {
-    this.difficulty.chickenSpeed = 1
-    this.difficulty.spawnRate = 2000
+    this.difficulty.chickenSpeed = 1.5
+    this.difficulty.spawnRate = 600
   },
   
   increaseDifficulty() {
-    // Tăng tốc độ gà
+    // Tăng tốc độ gà mạnh hơn
     this.difficulty.chickenSpeed *= this.difficulty.speedMultiplier
     
     // Giảm thời gian spawn để có nhiều gà hơn trên màn hình
     this.difficulty.spawnRate *= this.difficulty.spawnRateDecrease
     
-    // Giới hạn thời gian spawn tối thiểu thấp hơn để spawn nhiều gà hơn
-    if (this.difficulty.spawnRate < 150) { // Giảm từ 300 xuống 150ms để spawn cực nhanh
-      this.difficulty.spawnRate = 150
+    // Giới hạn thời gian spawn tối thiểu thấp hơn để spawn cực nhanh
+    if (this.difficulty.spawnRate < 100) { // Giảm từ 150 xuống 100ms
+      this.difficulty.spawnRate = 100
     }
     
     console.log(`Level ${this.level}: Spawn rate: ${this.difficulty.spawnRate}ms, Speed: ${this.difficulty.chickenSpeed.toFixed(2)}x, Chickens needed: ${this.getChickensRequired()}`)
