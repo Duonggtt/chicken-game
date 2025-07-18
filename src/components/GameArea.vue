@@ -244,21 +244,11 @@ export default {
       }
     })
     
-    // Handle mouse movement for spaceship control
+    // Handle mouse movement for spaceship control - DISABLED for better performance
+    // Let gameEngine handle all mouse movement for smoother control
     const handleMouseMove = (event) => {
-      if (!gameStore.isPlaying) return
-      
-      const gameArea = event.currentTarget
-      const rect = gameArea.getBoundingClientRect()
-      const x = event.clientX - rect.left
-      const y = event.clientY - rect.top
-      
-      // Update spaceship position to follow mouse (với offset để spaceship ở giữa con trỏ)
-      const spaceshipX = Math.max(0, Math.min(x - gameStore.spaceship.width / 2, gameStore.screenWidth - gameStore.spaceship.width))
-      const spaceshipY = Math.max(0, Math.min(y - gameStore.spaceship.height / 2, gameStore.screenHeight - gameStore.spaceship.height))
-      
-      gameStore.spaceship.x = spaceshipX
-      gameStore.spaceship.y = spaceshipY
+      // Disabled - gameEngine handles mouse movement more efficiently
+      return
     }
     
     // Handle click for shooting

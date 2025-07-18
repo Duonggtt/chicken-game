@@ -22,7 +22,7 @@ export class GameEngine {
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
     
     // Much more aggressive performance settings to fix lag
-    this.mouseMoveThrottle = this.isMobile ? 50 : 16 // 20fps for mobile, 60fps for desktop
+    this.mouseMoveThrottle = this.isMobile ? 16 : 8 // Much more responsive: 60fps mobile, 120fps desktop
     this.gameLoopThrottle = this.isMobile ? 50 : 33 // 20fps for mobile, 30fps for desktop
     this.maxExplosions = this.isMobile ? 3 : 8 // Reduce explosions significantly
     this.maxBullets = this.isMobile ? 15 : 50 // Reduce bullets significantly
@@ -42,35 +42,35 @@ export class GameEngine {
   }
   
   setupEventListeners() {
-    // Mouse movement for spaceship control with throttling
+    // High priority mouse movement for spaceship control - much more responsive
     document.addEventListener('mousemove', (e) => {
       const now = Date.now()
       if (now - this.lastMouseUpdate < this.mouseMoveThrottle) return
       this.lastMouseUpdate = now
       
-      const gameArea = document.getElementById('game-area')
+      const gameArea = document.getElementById('game-area') || document.querySelector('.game-area')
       if (!gameArea) return
       
       const rect = gameArea.getBoundingClientRect()
       this.targetX = e.clientX - rect.left
       this.targetY = e.clientY - rect.top
-    })
+    }, { passive: true, capture: true }) // Use capture for higher priority
     
-    // Touch events for mobile with throttling
+    // Touch events for mobile with much better responsiveness
     document.addEventListener('touchmove', (e) => {
       e.preventDefault()
       const now = Date.now()
       if (now - this.lastMouseUpdate < this.mouseMoveThrottle) return
       this.lastMouseUpdate = now
       
-      const gameArea = document.getElementById('game-area')
+      const gameArea = document.getElementById('game-area') || document.querySelector('.game-area')
       if (!gameArea) return
       
       const rect = gameArea.getBoundingClientRect()
       const touch = e.touches[0]
       this.targetX = touch.clientX - rect.left
       this.targetY = touch.clientY - rect.top
-    }, { passive: false })
+    }, { passive: false, capture: true }) // Use capture for higher priority
     
     // Resize handler
     window.addEventListener('resize', () => {
@@ -87,23 +87,28 @@ export class GameEngine {
     const spaceship = gameStore.spaceship
     const margin = 10
     
-    // More aggressive smooth interpolation for mobile to reduce jitter
-    const lerpFactor = this.isMobile ? 0.25 : 0.2 // Faster response on mobile
+    // Much more responsive interpolation - nearly instant on desktop
+    const lerpFactor = this.isMobile ? 0.4 : 0.6 // Much faster response
     
     // Calculate target position with boundaries
     const targetX = Math.max(margin, Math.min(this.targetX - spaceship.width / 2, gameStore.screenWidth - spaceship.width - margin))
     const targetY = Math.max(margin, Math.min(this.targetY - spaceship.height / 2, gameStore.screenHeight - spaceship.height - margin))
     
-    // Smooth interpolation to target position with deadzone to prevent micro-movements
+    // Much more responsive movement with smaller deadzone
     const deltaX = targetX - spaceship.x
     const deltaY = targetY - spaceship.y
-    const deadzone = 1.0 // Minimum movement threshold
+    const deadzone = 0.5 // Smaller deadzone for more responsive movement
     
     if (Math.abs(deltaX) > deadzone) {
       spaceship.x += deltaX * lerpFactor
+    } else {
+      spaceship.x = targetX // Snap to position if very close
     }
+    
     if (Math.abs(deltaY) > deadzone) {
       spaceship.y += deltaY * lerpFactor
+    } else {
+      spaceship.y = targetY // Snap to position if very close
     }
     
     // Update mouse position for reference
