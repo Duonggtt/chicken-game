@@ -156,14 +156,16 @@
         <div class="power-up-sprite">{{ getPowerUpIcon(powerUp.type) }}</div>
       </div>
       
-      <!-- Explosions - Simplified -->
+      <!-- Explosions - Precisely positioned -->
       <div 
         v-for="explosion in gameStore.explosions" 
         :key="explosion.id"
         class="explosion"
         :style="{ 
           left: explosion.x + 'px', 
-          top: explosion.y + 'px' 
+          top: explosion.y + 'px',
+          width: '64px',
+          height: '64px'
         }"
       >
         💥
@@ -475,7 +477,30 @@ export default {
 }
 
 .explosion {
-  @apply text-4xl flex items-center justify-center pointer-events-none;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  pointer-events: none;
+  width: 64px;
+  height: 64px;
+  animation: explosion-animate 0.5s ease-out;
+}
+
+@keyframes explosion-animate {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
 }
 
 .level-transition {

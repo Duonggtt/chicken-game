@@ -176,8 +176,17 @@ export default {
     
     const saveName = (name) => {
       // Enable audio with user interaction
-      advancedSoundManager.enable()
-      soundManager.enable()
+      try {
+        advancedSoundManager.enable()
+      } catch (error) {
+        // Silent fallback
+      }
+      
+      try {
+        soundManager.enable()
+      } catch (error) {
+        // Silent fallback
+      }
       
       gameStore.playerName = name
       gameStore.sessionStarted = true
@@ -223,10 +232,25 @@ export default {
     }
     
     const restartGame = () => {
+      // Stop current game completely first
+      gameEngine.stop()
+      
       // Re-enable audio when restarting
-      advancedSoundManager.enable()
-      soundManager.enable()
-      startGame()
+      try {
+        advancedSoundManager.enable()
+      } catch (error) {
+        // Silent fallback
+      }
+      
+      try {
+        soundManager.enable()
+      } catch (error) {
+        // Silent fallback
+      }
+      
+      // Start fresh game
+      gameStore.startGame()
+      gameEngine.start()
     }
     
     const goToMainMenu = () => {

@@ -38,7 +38,7 @@ export class GameEngine {
   
   init() {
     this.setupEventListeners()
-    this.startAutoShoot()
+    // Don't start auto shoot in init - only start when game actually starts
   }
   
   setupEventListeners() {
@@ -231,6 +231,9 @@ export class GameEngine {
     // Hide cursor during gameplay
     document.body.style.cursor = 'none'
     
+    // Start auto shooting when game starts
+    this.startAutoShoot()
+    
     this.lastTime = performance.now()
     this.gameLoop()
     try {
@@ -269,6 +272,13 @@ export class GameEngine {
   pause() {
     gameStore.paused = true
     gameStore.isPlaying = false // Stop all game activity
+    
+    // Stop auto shooting during pause
+    if (this.autoShootInterval) {
+      clearInterval(this.autoShootInterval)
+      this.autoShootInterval = null
+    }
+    
     try {
       advancedSoundManager.pauseMusic()
     } catch (error) {
@@ -279,6 +289,10 @@ export class GameEngine {
   resume() {
     gameStore.paused = false
     gameStore.isPlaying = true // Resume all game activity
+    
+    // Resume auto shooting when unpaused
+    this.startAutoShoot()
+    
     try {
       advancedSoundManager.resumeMusic()
     } catch (error) {
@@ -856,12 +870,10 @@ export class GameEngine {
       
       gameStore.chickens.forEach((chicken, chickenIndex) => {
         if (this.isBulletHittingEnemy(bullet, chicken)) {
-          // Create hit effect at collision point
-          bulletEffects.createHitEffect(
-            chicken.x + chicken.width / 2, 
-            chicken.y + chicken.height / 2, 
-            bullet.type
-          )
+          // Create hit effect at precise collision point - center of chicken
+          const hitX = chicken.x + chicken.width / 2
+          const hitY = chicken.y + chicken.height / 2
+          bulletEffects.createHitEffect(hitX, hitY, bullet.type)
           
           // Apply damage based on bullet type
           chicken.health -= bullet.damage || 10
@@ -873,7 +885,11 @@ export class GameEngine {
           gameStore.bullets.splice(bulletIndex, 1)
           
           if (chicken.health <= 0) {
-            this.createExplosion(chicken.x + chicken.width / 2, chicken.y + chicken.height / 2)
+            // Create explosion at exact chicken center position
+            const explosionX = chicken.x + chicken.width / 2
+            const explosionY = chicken.y + chicken.height / 2
+            this.createExplosion(explosionX, explosionY)
+            
             gameStore.chickens.splice(chickenIndex, 1)
             gameStore.addScore(10) // addScore sẽ tự động tăng chickensKilledThisLevel
             try {
@@ -887,12 +903,10 @@ export class GameEngine {
       
       // Bullets vs Boss (only player bullets)
       if (gameStore.boss && this.isBulletHittingEnemy(bullet, gameStore.boss)) {
-        // Create enhanced hit effect for boss
-        bulletEffects.createHitEffect(
-          gameStore.boss.x + gameStore.boss.width / 2, 
-          gameStore.boss.y + gameStore.boss.height / 2, 
-          bullet.type
-        )
+        // Create enhanced hit effect for boss at precise center
+        const hitX = gameStore.boss.x + gameStore.boss.width / 2
+        const hitY = gameStore.boss.y + gameStore.boss.height / 2
+        bulletEffects.createHitEffect(hitX, hitY, bullet.type)
         
         // Apply damage based on bullet type
         gameStore.boss.health -= bullet.damage || 10
@@ -911,7 +925,11 @@ export class GameEngine {
         }
         
         if (gameStore.boss.health <= 0) {
-          this.createExplosion(gameStore.boss.x + gameStore.boss.width / 2, gameStore.boss.y + gameStore.boss.height / 2)
+          // Create explosion at exact boss center position
+          const explosionX = gameStore.boss.x + gameStore.boss.width / 2
+          const explosionY = gameStore.boss.y + gameStore.boss.height / 2
+          this.createExplosion(explosionX, explosionY)
+          
           gameStore.boss = null
           gameStore.addScore(500)
           try {
@@ -928,9 +946,12 @@ export class GameEngine {
       if (bullet.type !== 'enemy') return // Only check enemy bullets
       
       if (this.isPlayerHit(bullet)) {
-        // Player hit by enemy bullet
+        // Player hit by enemy bullet - create explosion at bullet position
+        const explosionX = bullet.x + (bullet.width || 4) / 2
+        const explosionY = bullet.y + (bullet.height || 4) / 2
+        this.createExplosion(explosionX, explosionY)
+        
         gameStore.bullets.splice(bulletIndex, 1)
-        this.createExplosion(bullet.x, bullet.y)
         
         if (gameStore.shield <= 0) {
           // Boss bullets cause 0.5 damage (half heart)
@@ -953,9 +974,14 @@ export class GameEngine {
     // Chickens vs Player (strict collision)
     gameStore.chickens.forEach((chicken, chickenIndex) => {
       if (this.isEnemyHittingPlayer(chicken, gameStore.spaceship)) {
+        // Create explosion at collision point between chicken and player
+        const explosionX = (chicken.x + chicken.width / 2 + gameStore.spaceship.x + gameStore.spaceship.width / 2) / 2
+        const explosionY = (chicken.y + chicken.height / 2 + gameStore.spaceship.y + gameStore.spaceship.height / 2) / 2
+        this.createExplosion(explosionX, explosionY)
+        
         gameStore.chickens.splice(chickenIndex, 1)
         gameStore.takeDamage()
-        this.createExplosion(chicken.x + chicken.width / 2, chicken.y + chicken.height / 2)
+        
         try {
           advancedSoundManager.play('playerHit')
         } catch (error) {
@@ -964,9 +990,16 @@ export class GameEngine {
       }
     })
     
-    // PowerUps vs Player (normal collision)
+    // PowerUps vs Player (normal collision with larger tolerance)
     gameStore.powerUps.forEach((powerUp, powerUpIndex) => {
-      if (this.isColliding(powerUp, gameStore.spaceship, 5)) {
+      // Power-ups use more generous collision detection
+      const powerUpPadding = 8 // Easier to collect power-ups
+      const powerUpCollision = powerUp.x - powerUpPadding < gameStore.spaceship.x + gameStore.spaceship.width + powerUpPadding &&
+                              powerUp.x + powerUp.width + powerUpPadding > gameStore.spaceship.x - powerUpPadding &&
+                              powerUp.y - powerUpPadding < gameStore.spaceship.y + gameStore.spaceship.height + powerUpPadding &&
+                              powerUp.y + powerUp.height + powerUpPadding > gameStore.spaceship.y - powerUpPadding
+      
+      if (powerUpCollision) {
         this.applyPowerUp(powerUp.type)
         gameStore.powerUps.splice(powerUpIndex, 1)
         try {
@@ -978,29 +1011,48 @@ export class GameEngine {
     })
   }
   
+  // Collision detection with much more precise hitboxes
   isColliding(obj1, obj2, padding = 0) {
-    return obj1.x < obj2.x + obj2.width + padding &&
-           obj1.x + (obj1.width || 4) > obj2.x - padding &&
-           obj1.y < obj2.y + obj2.height + padding &&
-           obj1.y + (obj1.height || 4) > obj2.y - padding
+    return obj1.x + padding < obj2.x + obj2.width - padding &&
+           obj1.x + (obj1.width || 4) - padding > obj2.x + padding &&
+           obj1.y + padding < obj2.y + obj2.height - padding &&
+           obj1.y + (obj1.height || 4) - padding > obj2.y + padding
   }
 
-  // Collision detection for bullets hitting enemies (very precise - đạn phải thật sự chạm vào)
+  // Very precise collision detection for bullets hitting enemies
   isBulletHittingEnemy(bullet, enemy) {
-    const padding = -1 // Âm padding - đạn phải chồng lên gà một chút mới chết
-    return this.isColliding(bullet, enemy, padding)
+    // Much smaller collision area - bullet must actually overlap with enemy center area
+    const bulletPadding = 2 // Bullet needs to be closer
+    const enemyPadding = -8 // Enemy hitbox is smaller (8px smaller on each side)
+    
+    return bullet.x + bulletPadding < enemy.x + enemy.width + enemyPadding &&
+           bullet.x + (bullet.width || 4) - bulletPadding > enemy.x - enemyPadding &&
+           bullet.y + bulletPadding < enemy.y + enemy.height + enemyPadding &&
+           bullet.y + (bullet.height || 4) - bulletPadding > enemy.y - enemyPadding
   }
 
-  // Collision detection for enemies hitting player (strict)
+  // Very strict collision detection for enemies hitting player
   isEnemyHittingPlayer(enemy, player) {
-    const padding = -2 // Negative padding = must overlap slightly
-    return this.isColliding(enemy, player, padding)
+    // Much smaller collision area - enemy must actually touch player center
+    const enemyPadding = 5 // Enemy hitbox smaller
+    const playerPadding = 8 // Player hitbox much smaller
+    
+    return enemy.x + enemyPadding < player.x + player.width - playerPadding &&
+           enemy.x + enemy.width - enemyPadding > player.x + playerPadding &&
+           enemy.y + enemyPadding < player.y + player.height - playerPadding &&
+           enemy.y + enemy.height - enemyPadding > player.y + playerPadding
   }
   
-  // Collision detection for enemy bullets hitting player
+  // Very precise collision detection for enemy bullets hitting player
   isPlayerHit(bullet) {
-    const padding = -1 // Precise collision for enemy bullets
-    return this.isColliding(bullet, gameStore.spaceship, padding)
+    // Much smaller collision area - bullet must be very close to player center
+    const bulletPadding = 1
+    const playerPadding = 12 // Player has much smaller hitbox
+    
+    return bullet.x + bulletPadding < gameStore.spaceship.x + gameStore.spaceship.width - playerPadding &&
+           bullet.x + (bullet.width || 4) - bulletPadding > gameStore.spaceship.x + playerPadding &&
+           bullet.y + bulletPadding < gameStore.spaceship.y + gameStore.spaceship.height - playerPadding &&
+           bullet.y + (bullet.height || 4) - bulletPadding > gameStore.spaceship.y + playerPadding
   }
   
   createExplosion(x, y) {
@@ -1009,10 +1061,11 @@ export class GameEngine {
       gameStore.explosions.shift() // Remove oldest explosion
     }
     
+    // Center the explosion properly - adjust for explosion size (64x64)
     const explosion = {
       id: Date.now() + Math.random(),
-      x: x - 32,
-      y: y - 32,
+      x: x - 32, // Center horizontally (explosion is 64px wide, so -32)
+      y: y - 32, // Center vertically (explosion is 64px tall, so -32)
       life: this.isMobile ? 300 : 500 // Shorter life on mobile
     }
     gameStore.explosions.push(explosion)
@@ -1043,6 +1096,7 @@ export class GameEngine {
         this.resetAutoShoot()
         break
       case 'shield':
+        gameStore.shield = (gameStore.shield || 0) + 3 // Add 3 shield points
         gameStore.powerUpDuration = 3000
         break
       case 'life':
@@ -1064,6 +1118,12 @@ export class GameEngine {
         !gameStore.boss) {
       
       console.log(`Level ${gameStore.level} completed! Killed ${gameStore.chickensKilledThisLevel}/${gameStore.getChickensRequired()} chickens`)
+      
+      // Stop auto shooting during level transition
+      if (this.autoShootInterval) {
+        clearInterval(this.autoShootInterval)
+        this.autoShootInterval = null
+      }
       
       // Clear remaining chickens and power-ups immediately
       gameStore.chickens = []
@@ -1134,4 +1194,10 @@ export class GameEngine {
   }
 }
 
+// Export gameEngine instance and expose to window for cross-component access
 export const gameEngine = new GameEngine()
+
+// Expose to window for gameStore and other components
+if (typeof window !== 'undefined') {
+  window.gameEngine = gameEngine
+}

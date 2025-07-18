@@ -15,6 +15,7 @@ export const gameStore = reactive({
   level: 1,
   score: 0,
   lives: 3,
+  shield: 0, // Shield points for protection
   chickensKilledThisLevel: 0,
   // Số gà cần giết tăng mạnh hơn để phù hợp với spawn nhiều hơn
   getChickensRequired() {
@@ -90,6 +91,7 @@ export const gameStore = reactive({
     this.level = 1
     this.score = 0
     this.lives = 3
+    this.shield = 0 // Reset shield
     this.chickensKilledThisLevel = 0
     this.chickens = []
     this.bullets = []
@@ -126,10 +128,14 @@ export const gameStore = reactive({
     
     // Resume game activity after brief delay for level transition
     setTimeout(() => {
-      if (this.gameStarted && !this.paused) {
+      if (this.gameStarted && !this.paused && !this.gameOver) {
         this.isPlaying = true
+        // Notify gameEngine to restart auto shooting after level transition
+        if (window.gameEngine && window.gameEngine.startAutoShoot) {
+          window.gameEngine.startAutoShoot()
+        }
       }
-    }, 500) // 500ms delay for level transition
+    }, 1000) // 1 second delay for level transition
   },
   
   resetDifficulty() {
