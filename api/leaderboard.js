@@ -1,5 +1,5 @@
 // Vercel Serverless Function - Get Leaderboard
-import { MongoClient } from 'mongodb'
+const { MongoClient } = require('mongodb')
 
 const MONGO_URI = 'mongodb+srv://admin:sqk5b4DcnOpXqq2n@chicken-game.kvugxpb.mongodb.net/chicken_game'
 
@@ -16,7 +16,7 @@ async function connectToDatabase() {
   return client
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true)
   res.setHeader('Access-Control-Allow-Origin', '*')
