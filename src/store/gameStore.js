@@ -110,12 +110,20 @@ export const gameStore = reactive({
   },
   
   nextLevel() {
-    // Temporarily stop game activity during level transition
+    // Immediately stop all game activity during level transition
     this.isPlaying = false
+    this.paused = true // Also set paused to ensure complete stop
+    
+    // Stop auto shooting immediately
+    if (window.gameEngine && window.gameEngine.stopAutoShoot) {
+      window.gameEngine.stopAutoShoot()
+    }
     
     this.level++
     this.chickensKilledThisLevel = 0 // Reset số gà đã giết
     this.increaseDifficulty()
+    
+    // Clear all game objects to prevent stuck bullets
     this.chickens = []
     this.bullets = []
     this.explosions = []
@@ -126,16 +134,17 @@ export const gameStore = reactive({
       this.spawnBoss()
     }
     
-    // Resume game activity after brief delay for level transition
+    // Resume game activity after longer delay for level transition to complete
     setTimeout(() => {
-      if (this.gameStarted && !this.paused && !this.gameOver) {
+      if (this.gameStarted && !this.gameOver) {
+        this.paused = false
         this.isPlaying = true
-        // Notify gameEngine to restart auto shooting after level transition
+        // Restart auto shooting after complete transition
         if (window.gameEngine && window.gameEngine.startAutoShoot) {
           window.gameEngine.startAutoShoot()
         }
       }
-    }, 1000) // 1 second delay for level transition
+    }, 2500) // 2.5 seconds delay to ensure level transition completes
   },
   
   resetDifficulty() {

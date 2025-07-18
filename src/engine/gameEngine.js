@@ -125,6 +125,11 @@ export class GameEngine {
       this.autoShootInterval = null
     }
     
+    // Don't start if game is paused or not playing
+    if (!gameStore.isPlaying || gameStore.paused) {
+      return
+    }
+    
     // Dynamic shooting speed based on level - faster each level
     const levelSpeedBonus = Math.max(0.7, 1 - (gameStore.level * 0.08)) // Faster each level, minimum 0.7x
     const baseInterval = gameStore.currentWeapon === 'rapid' ? 100 : 250 // Base intervals
@@ -137,6 +142,13 @@ export class GameEngine {
         this.shoot()
       }
     }, shootInterval)
+  }
+  
+  stopAutoShoot() {
+    if (this.autoShootInterval) {
+      clearInterval(this.autoShootInterval)
+      this.autoShootInterval = null
+    }
   }
   
   shoot() {
@@ -307,19 +319,19 @@ export class GameEngine {
       return
     }
     
-    const deltaTime = currentTime - this.lastTime
+    const deltaTime = Math.min(currentTime - this.lastTime, 33) // Cap at 30fps minimum for stability
     
-    // More aggressive throttling for mobile
-    if (deltaTime < this.gameLoopThrottle) {
+    // Reduced throttling for smoother movement
+    if (deltaTime < 16) { // Target 60fps instead of aggressive throttling
       this.animationId = requestAnimationFrame((time) => this.gameLoop(time))
       return
     }
     
     this.lastTime = currentTime
     
-    // Frame skipping for very low performance devices
+    // Less aggressive frame skipping - only for very poor performance
     this.frameCounter++
-    if (this.frameCounter % this.frameSkip !== 0) {
+    if (this.isMobile && this.frameCounter % 2 !== 0 && gameStore.chickens.length > 20) {
       this.animationId = requestAnimationFrame((time) => this.gameLoop(time))
       return
     }
@@ -327,27 +339,33 @@ export class GameEngine {
     // Always update spaceship position for smooth movement
     this.updateSpaceshipPosition()
     
-    // Only update game logic when game is actively playing
+    // Only update game logic when game is actively playing (not transitioning levels)
     if (!gameStore.paused && gameStore.isPlaying) {
       this.spawnChickens(currentTime)
       this.spawnPowerUps(currentTime)
       this.updateBullets(deltaTime)
-      this.updateChickens(deltaTime)
+      this.updateChickens(deltaTime) // Now much more optimized
       this.updateBoss(deltaTime)
       this.updateExplosions(deltaTime)
       this.updatePowerUps(deltaTime)
+      
+      // Collision detection every frame for accuracy but optimized
       this.checkCollisions()
-      this.checkLevelComplete()
+      
+      // Level check less frequently
+      if (this.frameCounter % 20 === 0) {
+        this.checkLevelComplete()
+      }
+    } else {
+      // When paused or transitioning levels, clear bullets to prevent stuck bullets
+      if (gameStore.paused) {
+        gameStore.bullets = []
+      }
     }
     
-    // Always cleanup to prevent memory issues, but more frequently during active play
-    if (gameStore.isPlaying) {
+    // Less frequent cleanup to avoid performance spikes
+    if (this.frameCounter % 120 === 0) { // Every 2 seconds
       this.cleanupArrays()
-    } else {
-      // Less frequent cleanup when paused
-      if (this.frameCounter % 10 === 0) {
-        this.cleanupArrays()
-      }
     }
     
     this.animationId = requestAnimationFrame((time) => this.gameLoop(time))
@@ -357,35 +375,62 @@ export class GameEngine {
     // Don't spawn during boss fight, pause, or when game is not actively playing
     if (gameStore.boss || !gameStore.isPlaying || gameStore.paused) return
     
-    // Dramatically increase chicken count each level
-    const maxChickensOnScreen = Math.min(
-      this.isMobile ? 12 : 25, // Reduced from 15:35 to prevent lag
-      5 + (gameStore.level * 2) // 2 more chickens per level instead of 3
-    )
+    // Much more conservative spawning to prevent lag
+    const maxChickensOnScreen = this.isMobile ? 6 : 12 // Reduced significantly
     
     if (gameStore.chickens.length >= maxChickensOnScreen) return
     
-    // Much faster spawn rate that decreases with level
-    const baseSpawnRate = gameStore.difficulty.spawnRate * (gameStore.difficulty.spawnRateMultiplier || 1.0)
-    const levelSpawnMultiplier = Math.max(0.4, 1 - (gameStore.level * 0.04)) // Slower progression to prevent lag
+    // Slower, more controlled spawn rate
+    const baseSpawnRate = 1800 // 1.8 seconds base (slower)
+    const levelSpawnMultiplier = Math.max(0.6, 1 - (gameStore.level * 0.02)) // Much slower progression
     const spawnRate = baseSpawnRate * levelSpawnMultiplier
     
     if (currentTime - this.lastChickenSpawn > spawnRate) {
-      // Controlled chicken spawning to prevent lag
-      const baseChickens = this.isMobile ? 1 : 2 // Reduced base spawning
-      const levelMultiplier = Math.floor(1 + Math.pow(gameStore.level, 1.1) * 0.1) // Slower exponential growth
-      const chickensToSpawn = Math.min(
-        baseChickens * levelMultiplier,
-        this.isMobile ? 4 : 8 // Lower caps to prevent lag
-      )
+      // Only spawn 1-2 chickens at a time for smooth performance
+      const chickensToSpawn = gameStore.level > 8 ? 2 : 1
       
-      // Create formation patterns for flocking behavior
-      const formationTypes = ['line', 'v-formation', 'cluster', 'wave', 'scattered']
-      const formation = formationTypes[Math.floor(Math.random() * formationTypes.length)]
+      // Simple spawning instead of complex formations to reduce lag
+      for (let i = 0; i < chickensToSpawn; i++) {
+        this.spawnChicken()
+      }
       
-      this.spawnChickenFormation(formation, chickensToSpawn)
       this.lastChickenSpawn = currentTime
     }
+  }
+  
+  // Simple chicken spawning for better performance
+  spawnChicken() {
+    // Conservative chicken size
+    const baseSize = 45 + Math.floor(gameStore.level * 0.8) // Slower growth
+    const chickenWidth = Math.min(baseSize, 65) // Smaller max size
+    const chickenHeight = Math.min(baseSize * 0.75, 50)
+    
+    // Moderate speed increase
+    const baseSpeed = 1.5 + (gameStore.level * 0.15) // Much slower speed progression
+    
+    const chicken = {
+      id: Date.now() + Math.random(),
+      x: Math.random() * (gameStore.screenWidth - chickenWidth),
+      y: -chickenHeight - Math.random() * 50,
+      width: chickenWidth,
+      height: chickenHeight,
+      speed: baseSpeed + Math.random() * 0.5, // Small speed variation
+      health: Math.max(1, Math.floor(gameStore.level / 5) + 1), // Very slow health scaling
+      maxHealth: Math.max(1, Math.floor(gameStore.level / 5) + 1),
+      
+      // Simple movement properties for smooth animation
+      zigzag: Math.random() > 0.5, // 50% chance for zigzag
+      zigzagDirection: Math.random() > 0.5 ? 1 : -1,
+      zigzagSpeed: 0.5 + Math.random() * 0.5, // Gentle zigzag
+      isDiving: false,
+      diveSpeed: baseSpeed * 1.5,
+      diveTarget: null,
+      
+      // Simplified properties to reduce CPU load
+      flockRole: 'solo' // No complex flocking
+    }
+    
+    gameStore.chickens.push(chicken)
   }
   
   spawnChickenFormation(formation, count) {
@@ -559,31 +604,31 @@ export class GameEngine {
         return true // Keep chickens but don't update them
       }
       
-      // Advanced flocking behavior with level-based speed
-      this.updateChickenFlockBehavior(chicken, deltaTime)
+      // Simplified movement for better performance and smoother animation
+      const levelSpeedMultiplier = 1 + (gameStore.level * 0.1) // Reduced from 0.15 to 0.1
+      const smoothDeltaTime = Math.min(deltaTime, 32) // Cap deltaTime to prevent jerky movement
       
-      // Basic downward movement with level speed bonus
-      const levelSpeedMultiplier = 1 + (gameStore.level * 0.15) // Reduced from 0.2 to 0.15
-      chicken.y += chicken.speed * levelSpeedMultiplier * (deltaTime / 16)
+      // Basic downward movement with smooth interpolation
+      chicken.y += chicken.speed * levelSpeedMultiplier * (smoothDeltaTime / 16)
       
-      // Enhanced zigzag movement (less CPU intensive)
-      if (chicken.zigzag && !chicken.isDiving) {
+      // Simplified zigzag movement - only for some chickens to reduce CPU load
+      if (chicken.zigzag && !chicken.isDiving && Math.random() < 0.7) { // Only 70% chance to apply zigzag each frame
         const zigzagStrength = chicken.zigzagSpeed * levelSpeedMultiplier
-        chicken.x += chicken.zigzagDirection * zigzagStrength * (deltaTime / 16)
+        chicken.x += chicken.zigzagDirection * zigzagStrength * (smoothDeltaTime / 16)
         
         // Bounce off walls
         if (chicken.x <= 0 || chicken.x >= gameStore.screenWidth - chicken.width) {
           chicken.zigzagDirection *= -1
         }
         
-        // Reduced random direction changes for better performance
-        if (Math.random() < 0.001) { // Reduced from 0.002
+        // Much less frequent random direction changes for smoother movement
+        if (Math.random() < 0.0003) { // Reduced from 0.001
           chicken.zigzagDirection *= -1
         }
       }
       
-      // Reduced diving behavior frequency to prevent lag
-      if (!chicken.isDiving && Math.random() < 0.0005 * gameStore.level) { // Reduced from 0.001
+      // Greatly reduced diving behavior frequency to prevent lag and erratic movement
+      if (!chicken.isDiving && gameStore.level > 3 && Math.random() < 0.0001 * gameStore.level) { // Much reduced
         chicken.isDiving = true
         chicken.diveTarget = {
           x: gameStore.spaceship.x + gameStore.spaceship.width / 2,
@@ -591,15 +636,16 @@ export class GameEngine {
         }
       }
       
-      // Execute diving behavior
+      // Execute diving behavior with smoother movement
       if (chicken.isDiving && chicken.diveTarget) {
         const dx = chicken.diveTarget.x - chicken.x
         const dy = chicken.diveTarget.y - chicken.y
         const distance = Math.sqrt(dx * dx + dy * dy)
         
-        if (distance > 15) { // Increased threshold to end dive sooner
-          chicken.x += (dx / distance) * chicken.diveSpeed * (deltaTime / 16)
-          chicken.y += (dy / distance) * chicken.diveSpeed * (deltaTime / 16)
+        if (distance > 20) { // Increased threshold to end dive sooner
+          const moveSpeed = chicken.diveSpeed * 0.8 // Slower dive speed for smoother movement
+          chicken.x += (dx / distance) * moveSpeed * (smoothDeltaTime / 16)
+          chicken.y += (dy / distance) * moveSpeed * (smoothDeltaTime / 16)
         } else {
           chicken.isDiving = false
           chicken.diveTarget = null
@@ -615,7 +661,11 @@ export class GameEngine {
     })
   }
   
+  // Greatly simplified flocking for better performance and smoother movement
   updateChickenFlockBehavior(chicken, deltaTime) {
+    // Disable complex flocking behavior that causes lag and jerkiness
+    if (Math.random() > 0.98) return // Only apply very rarely (2% chance)
+    
     if (chicken.flockRole === 'solo') return
     
     const flockMates = gameStore.chickens.filter(c => 
@@ -625,51 +675,21 @@ export class GameEngine {
     if (flockMates.length === 0) return
     
     if (chicken.flockRole === 'follower') {
-      // Find leader or follow formation
+      // Find leader with minimal processing
       let target = flockMates.find(c => c.flockRole === 'leader')
-      
-      if (!target && chicken.formation === 'v-formation') {
-        // Follow the chicken ahead in formation
-        target = flockMates.find(c => c.originalIndex === chicken.originalIndex - 1)
-      }
       
       if (target) {
         const dx = target.x - chicken.x
         const dy = target.y - chicken.y
-        const distance = Math.sqrt(dx * dx + dy * dy)
+        const distance = Math.abs(dx) + Math.abs(dy) // Use Manhattan distance for performance
         
-        // Maintain formation distance
+        // Much gentler following to prevent jerky movement
         if (distance > chicken.followDistance) {
-          const pullStrength = 0.25 + (gameStore.level * 0.015) // Reduced pull strength to prevent lag
-          chicken.x += (dx / distance) * pullStrength * (deltaTime / 16)
-          chicken.y += (dy / distance) * pullStrength * (deltaTime / 16)
+          const pullStrength = 0.05 // Much reduced strength
+          chicken.x += Math.sign(dx) * pullStrength * (deltaTime / 16)
+          chicken.y += Math.sign(dy) * pullStrength * (deltaTime / 16)
         }
-        
-        // Reduced separation calculation to prevent lag - only check nearby flock mates
-        const nearbyMates = flockMates.filter(mate => {
-          const mdx = mate.x - chicken.x
-          const mdy = mate.y - chicken.y
-          return Math.abs(mdx) < 50 && Math.abs(mdy) < 50 // Pre-filter for performance
-        })
-        
-        nearbyMates.forEach(mate => {
-          const mdx = mate.x - chicken.x
-          const mdy = mate.y - chicken.y
-          const mdist = Math.sqrt(mdx * mdx + mdy * mdy)
-          
-          if (mdist < 25 && mdist > 0) { // Reduced separation distance
-            const repelStrength = 0.3 // Reduced repel strength
-            chicken.x -= (mdx / mdist) * repelStrength * (deltaTime / 16)
-            chicken.y -= (mdy / mdist) * repelStrength * (deltaTime / 16)
-          }
-        })
       }
-    }
-    
-    // Leaders occasionally change direction to add variety (less frequent to reduce CPU)
-    if (chicken.flockRole === 'leader' && Math.random() < 0.0005) { // Reduced frequency
-      chicken.zigzagDirection *= -1
-      chicken.zigzagSpeed = 1 + Math.random() * 2
     }
   }
   

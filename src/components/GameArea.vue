@@ -242,9 +242,10 @@ export default {
     watch(() => gameStore.level, (newLevel, oldLevel) => {
       if (newLevel > oldLevel) {
         showLevelTransition.value = true
+        // Show transition for longer time to match gameStore delay
         setTimeout(() => {
           showLevelTransition.value = false
-        }, 2000)
+        }, 2200) // 2.2 seconds to match gameStore 2.5s delay
       }
     })
     
