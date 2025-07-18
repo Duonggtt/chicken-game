@@ -1,4 +1,4 @@
-// Bullet Effects Manager - Advanced visual effects for shooting
+// Bullet Effects Manager - Optimized for performance
 import '../styles/bulletEffects.css'
 
 class BulletEffectsManager {
@@ -7,9 +7,15 @@ class BulletEffectsManager {
     this.muzzleFlashes = []
     this.hitEffects = []
     this.bulletTrails = new Map()
+    
+    // Performance optimization
+    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    this.maxParticles = this.isMobile ? 5 : 20
+    this.enableTrails = !this.isMobile // Disable trails on mobile
+    this.enableMuzzleFlash = !this.isMobile // Disable muzzle flash on mobile
   }
 
-  // Create different types of bullets with unique effects
+  // Create different types of bullets with reduced effects for performance
   createBullet(x, y, weaponType = 'normal') {
     // Check if game area exists
     const gameArea = document.querySelector('.game-area')
@@ -31,11 +37,15 @@ class BulletEffectsManager {
     // Add bullet to DOM
     gameArea.appendChild(bullet.element)
     
-    // Create muzzle flash
-    this.createMuzzleFlash(x, y, weaponType)
+    // Create muzzle flash only on desktop
+    if (this.enableMuzzleFlash) {
+      this.createMuzzleFlash(x, y, weaponType)
+    }
     
-    // Start particle trail
-    this.startBulletTrail(bullet)
+    // Start particle trail only on desktop
+    if (this.enableTrails) {
+      this.startBulletTrail(bullet)
+    }
     
     return bullet
   }

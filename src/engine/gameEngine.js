@@ -16,17 +16,22 @@ export class GameEngine {
     this.autoShootInterval = null
     this.lastMouseUpdate = 0
     
-    // Mobile optimization
+    // Mobile optimization - Aggressive performance settings
     this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     this.isTablet = /iPad|Android(?=.*\bMobile\b)(?=.*\bSafari\b)|Android(?=.*\bSafari\b)/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
     
-    // Adaptive performance settings
-    this.mouseMoveThrottle = this.isMobile ? 33 : 16 // 30fps for mobile, 60fps for desktop
-    this.gameLoopThrottle = this.isMobile ? 33 : 16
-    this.maxExplosions = this.isMobile ? 5 : 15
-    this.maxBullets = this.isMobile ? 30 : 100
-    this.particleCount = this.isMobile ? 0.3 : 1.0 // Reduce particles on mobile
+    // Much more aggressive performance settings to fix lag
+    this.mouseMoveThrottle = this.isMobile ? 50 : 16 // 20fps for mobile, 60fps for desktop
+    this.gameLoopThrottle = this.isMobile ? 50 : 33 // 20fps for mobile, 30fps for desktop
+    this.maxExplosions = this.isMobile ? 3 : 8 // Reduce explosions significantly
+    this.maxBullets = this.isMobile ? 15 : 50 // Reduce bullets significantly
+    this.particleCount = this.isMobile ? 0.1 : 0.5 // Much fewer particles
+    this.maxChickens = this.isMobile ? 8 : 20 // Limit chickens on screen
+    
+    // Frame skipping for very low-end devices
+    this.frameSkip = this.isMobile ? 2 : 1
+    this.frameCounter = 0
     
     this.init()
   }
@@ -82,16 +87,24 @@ export class GameEngine {
     const spaceship = gameStore.spaceship
     const margin = 10
     
-    // Smooth interpolation factor (0.1 = slow, 0.3 = fast)
-    const lerpFactor = 0.15
+    // More aggressive smooth interpolation for mobile to reduce jitter
+    const lerpFactor = this.isMobile ? 0.25 : 0.2 // Faster response on mobile
     
     // Calculate target position with boundaries
     const targetX = Math.max(margin, Math.min(this.targetX - spaceship.width / 2, gameStore.screenWidth - spaceship.width - margin))
     const targetY = Math.max(margin, Math.min(this.targetY - spaceship.height / 2, gameStore.screenHeight - spaceship.height - margin))
     
-    // Smooth interpolation to target position
-    spaceship.x += (targetX - spaceship.x) * lerpFactor
-    spaceship.y += (targetY - spaceship.y) * lerpFactor
+    // Smooth interpolation to target position with deadzone to prevent micro-movements
+    const deltaX = targetX - spaceship.x
+    const deltaY = targetY - spaceship.y
+    const deadzone = 1.0 // Minimum movement threshold
+    
+    if (Math.abs(deltaX) > deadzone) {
+      spaceship.x += deltaX * lerpFactor
+    }
+    if (Math.abs(deltaY) > deadzone) {
+      spaceship.y += deltaY * lerpFactor
+    }
     
     // Update mouse position for reference
     this.mouseX = this.targetX
@@ -99,9 +112,9 @@ export class GameEngine {
   }
   
   startAutoShoot() {
-    // Slower shooting on mobile to reduce CPU load
-    const baseInterval = gameStore.currentWeapon === 'rapid' ? 100 : 250
-    const shootInterval = this.isMobile ? baseInterval * 1.5 : baseInterval
+    // Much slower shooting to reduce CPU load and lag
+    const baseInterval = gameStore.currentWeapon === 'rapid' ? 150 : 400 // Increased intervals
+    const shootInterval = this.isMobile ? baseInterval * 2 : baseInterval * 1.2 // Even slower on mobile
     
     this.autoShootInterval = setInterval(() => {
       if (gameStore.gameStarted && !gameStore.paused) {
@@ -266,13 +279,20 @@ export class GameEngine {
     
     const deltaTime = currentTime - this.lastTime
     
-    // Throttle game loop for mobile performance
+    // More aggressive throttling for mobile
     if (deltaTime < this.gameLoopThrottle) {
       this.animationId = requestAnimationFrame((time) => this.gameLoop(time))
       return
     }
     
     this.lastTime = currentTime
+    
+    // Frame skipping for very low performance devices
+    this.frameCounter++
+    if (this.frameCounter % this.frameSkip !== 0) {
+      this.animationId = requestAnimationFrame((time) => this.gameLoop(time))
+      return
+    }
     
     // Always update spaceship position for smooth movement
     this.updateSpaceshipPosition()
@@ -288,7 +308,7 @@ export class GameEngine {
       this.checkCollisions()
       this.checkLevelComplete()
       
-      // Clean up arrays to prevent memory issues on mobile
+      // More aggressive cleanup to prevent memory issues
       this.cleanupArrays()
     }
     
@@ -298,14 +318,18 @@ export class GameEngine {
   spawnChickens(currentTime) {
     if (gameStore.boss) return // No chickens during boss fight
     
-    // Apply difficulty multiplier from settings
-    const spawnRate = gameStore.difficulty.spawnRate * (gameStore.difficulty.spawnRateMultiplier || 1.0)
+    // Limit total chickens on screen for performance
+    if (gameStore.chickens.length >= this.maxChickens) return
+    
+    // Apply difficulty multiplier from settings with performance consideration
+    const baseSpawnRate = gameStore.difficulty.spawnRate * (gameStore.difficulty.spawnRateMultiplier || 1.0)
+    const spawnRate = this.isMobile ? baseSpawnRate * 1.5 : baseSpawnRate // Slower spawn on mobile
     
     if (currentTime - this.lastChickenSpawn > spawnRate) {
-      // Số gà spawn cùng lúc tăng theo level để tạo nhiều gà trên màn hình
-      const baseChickens = 2 // Bắt đầu với 2 gà
-      const extraChickens = Math.floor(gameStore.level / 2) // Thêm 1 gà mỗi 2 level
-      const chickensToSpawn = Math.min(baseChickens + extraChickens, 6) // Tối đa 6 gà cùng lúc
+      // Reduce chickens spawned at once for performance
+      const baseChickens = this.isMobile ? 1 : 2 // Only 1 chicken on mobile
+      const extraChickens = this.isMobile ? 0 : Math.floor(gameStore.level / 3) // Less scaling on mobile
+      const chickensToSpawn = Math.min(baseChickens + extraChickens, this.isMobile ? 2 : 4) // Max 2 on mobile, 4 on desktop
       
       for (let i = 0; i < chickensToSpawn; i++) {
         const chicken = {
@@ -317,7 +341,7 @@ export class GameEngine {
           speed: gameStore.difficulty.chickenSpeed + Math.random() * 2,
           health: Math.floor(gameStore.level / 3) + 1,
           maxHealth: Math.floor(gameStore.level / 3) + 1,
-          zigzag: Math.random() > 0.7,
+          zigzag: this.isMobile ? false : Math.random() > 0.7, // Disable zigzag on mobile for performance
           zigzagDirection: 1
         }
         
@@ -794,6 +818,30 @@ export class GameEngine {
         }
       }
     }
+  }
+  
+  // Aggressive cleanup method to prevent memory issues and lag
+  cleanupArrays() {
+    // Limit bullets more aggressively
+    if (gameStore.bullets.length > this.maxBullets) {
+      gameStore.bullets = gameStore.bullets.slice(-this.maxBullets)
+    }
+    
+    // Limit explosions
+    if (gameStore.explosions.length > this.maxExplosions) {
+      gameStore.explosions = gameStore.explosions.slice(-this.maxExplosions)
+    }
+    
+    // Limit chickens
+    if (gameStore.chickens.length > this.maxChickens) {
+      gameStore.chickens = gameStore.chickens.slice(-this.maxChickens)
+    }
+    
+    // Remove off-screen bullets immediately
+    gameStore.bullets = gameStore.bullets.filter(bullet => bullet.y > -50)
+    
+    // Remove finished explosions immediately
+    gameStore.explosions = gameStore.explosions.filter(explosion => explosion.life > 0)
   }
 }
 

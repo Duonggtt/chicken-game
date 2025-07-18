@@ -97,11 +97,11 @@
         }"
       ></div>
       
-      <!-- Chickens -->
+      <!-- Chickens - Remove heavy animations for performance -->
       <div 
         v-for="chicken in gameStore.chickens" 
         :key="chicken.id"
-        class="chicken animate-bounce"
+        class="chicken"
         :style="{ 
           left: chicken.x + 'px', 
           top: chicken.y + 'px',
@@ -118,10 +118,10 @@
         </div>
       </div>
       
-      <!-- Boss -->
+      <!-- Boss - Simplified animations -->
       <div 
         v-if="gameStore.boss"
-        class="boss animate-bounce"
+        class="boss"
         :style="{ 
           left: gameStore.boss.x + 'px', 
           top: gameStore.boss.y + 'px',
@@ -130,28 +130,24 @@
         }"
       >
         <div class="boss-sprite">
-          <!-- Con gà boss to với hiệu ứng -->
+          <!-- Con gà boss to với hiệu ứng giảm thiểu -->
           <div class="chicken-boss-body" :style="{ 
             fontSize: getBossSize(gameStore.boss.level),
-            transform: `scale(${getBossScale(gameStore.boss.level)})`,
-            filter: `drop-shadow(0 0 ${10 + gameStore.boss.level * 2}px rgba(255, 215, 0, ${0.8 + gameStore.boss.level * 0.1}))`
+            transform: `scale(${getBossScale(gameStore.boss.level)})`
           }">
             🐔
           </div>
           <div class="boss-level-indicator">
             LV.{{ gameStore.boss.level }}
           </div>
-          <div class="boss-glow" :style="{
-            background: `radial-gradient(circle, rgba(255, 0, 0, ${0.3 + gameStore.boss.level * 0.1}) 0%, transparent 70%)`
-          }"></div>
         </div>
       </div>
       
-      <!-- Power-ups -->
+      <!-- Power-ups - Remove spin animation -->
       <div 
         v-for="powerUp in gameStore.powerUps" 
         :key="powerUp.id"
-        class="power-up animate-spin"
+        class="power-up"
         :style="{ 
           left: powerUp.x + 'px', 
           top: powerUp.y + 'px' 
@@ -160,11 +156,11 @@
         <div class="power-up-sprite">{{ getPowerUpIcon(powerUp.type) }}</div>
       </div>
       
-      <!-- Explosions -->
+      <!-- Explosions - Simplified -->
       <div 
         v-for="explosion in gameStore.explosions" 
         :key="explosion.id"
-        class="explosion animate-ping"
+        class="explosion"
         :style="{ 
           left: explosion.x + 'px', 
           top: explosion.y + 'px' 
@@ -304,8 +300,15 @@ export default {
 </script>
 
 <style scoped>
+/* Performance optimized CSS - No heavy animations */
 .game-area {
-  @apply relative w-full h-screen overflow-hidden;
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  /* Hardware acceleration for better performance */
+  transform: translateZ(0);
+  will-change: auto;
 }
 
 .hide-cursor {
