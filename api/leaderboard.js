@@ -1,20 +1,5 @@
 // Vercel Serverless Function - Get Leaderboard
-const { MongoClient } = require('mongodb')
-
-const MONGO_URI = 'mongodb+srv://admin:sqk5b4DcnOpXqq2n@chicken-game.kvugxpb.mongodb.net/chicken_game'
-
-let cachedClient = null
-
-async function connectToDatabase() {
-  if (cachedClient) {
-    return cachedClient
-  }
-  
-  const client = new MongoClient(MONGO_URI)
-  await client.connect()
-  cachedClient = client
-  return client
-}
+// Temporary fallback without MongoDB dependency
 
 module.exports = async function handler(req, res) {
   // CORS headers
@@ -34,18 +19,19 @@ module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const limit = parseInt(req.query.limit) || 10
+      console.log('Fetching leaderboard with limit:', limit)
       
-      const client = await connectToDatabase()
-      const db = client.db('chicken_game')
-      
-      const scores = await db.collection('scores')
-        .find({})
-        .sort({ score: -1, createdAt: -1 })
-        .limit(Math.min(limit, 100)) // Tối đa 100 records
-        .toArray()
+      // TODO: Replace with MongoDB connection
+      // For now, return mock data to prevent frontend errors
+      const mockScores = [
+        { playerName: 'Demo Player 1', score: 5000, level: 8, date: new Date().toISOString() },
+        { playerName: 'Demo Player 2', score: 4500, level: 7, date: new Date().toISOString() },
+        { playerName: 'Demo Player 3', score: 4000, level: 6, date: new Date().toISOString() },
+        { playerName: 'Demo Player 4', score: 3500, level: 5, date: new Date().toISOString() },
+        { playerName: 'Demo Player 5', score: 3000, level: 4, date: new Date().toISOString() }
+      ]
 
-      // Loại bỏ các trường không cần thiết
-      const cleanedScores = scores.map(score => ({
+      const cleanedScores = mockScores.slice(0, limit).map(score => ({
         playerName: score.playerName,
         score: score.score,
         level: score.level,
@@ -53,16 +39,20 @@ module.exports = async function handler(req, res) {
         timestamp: score.date // For compatibility
       }))
 
+      console.log('Returning mock scores:', cleanedScores.length)
+
       res.status(200).json({ 
         success: true, 
         scores: cleanedScores,
-        total: scores.length 
+        total: cleanedScores.length,
+        message: 'Mock data (localStorage fallback)'
       })
     } catch (error) {
       console.error('Error fetching leaderboard:', error)
       res.status(500).json({ 
         success: false, 
-        error: 'Failed to fetch leaderboard' 
+        error: 'Failed to fetch leaderboard',
+        details: error.message 
       })
     }
   } else {
