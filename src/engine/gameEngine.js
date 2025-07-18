@@ -992,14 +992,22 @@ export class GameEngine {
     
     // PowerUps vs Player (normal collision with larger tolerance)
     gameStore.powerUps.forEach((powerUp, powerUpIndex) => {
-      // Power-ups use more generous collision detection
-      const powerUpPadding = 8 // Easier to collect power-ups
-      const powerUpCollision = powerUp.x - powerUpPadding < gameStore.spaceship.x + gameStore.spaceship.width + powerUpPadding &&
-                              powerUp.x + powerUp.width + powerUpPadding > gameStore.spaceship.x - powerUpPadding &&
-                              powerUp.y - powerUpPadding < gameStore.spaceship.y + gameStore.spaceship.height + powerUpPadding &&
-                              powerUp.y + powerUp.height + powerUpPadding > gameStore.spaceship.y - powerUpPadding
+          // PowerUps vs Player (more generous collision for better gameplay)
+    gameStore.powerUps.forEach((powerUp, powerUpIndex) => {
+      // Power-ups use center-to-center collision detection but more generous
+      const powerUpCenterX = powerUp.x + powerUp.width / 2
+      const powerUpCenterY = powerUp.y + powerUp.height / 2
+      const playerCenterX = gameStore.spaceship.x + gameStore.spaceship.width / 2
+      const playerCenterY = gameStore.spaceship.y + gameStore.spaceship.height / 2
       
-      if (powerUpCollision) {
+      // Distance-based collision for power-ups (easier to collect)
+      const distance = Math.sqrt(
+        Math.pow(powerUpCenterX - playerCenterX, 2) + 
+        Math.pow(powerUpCenterY - playerCenterY, 2)
+      )
+      const collisionDistance = 30 // 30px radius for power-up collection
+      
+      if (distance <= collisionDistance) {
         this.applyPowerUp(powerUp.type)
         gameStore.powerUps.splice(powerUpIndex, 1)
         try {
@@ -1008,6 +1016,7 @@ export class GameEngine {
           soundManager.play('powerUp')
         }
       }
+    })
     })
   }
   
@@ -1021,38 +1030,56 @@ export class GameEngine {
 
   // Very precise collision detection for bullets hitting enemies
   isBulletHittingEnemy(bullet, enemy) {
-    // Much smaller collision area - bullet must actually overlap with enemy center area
-    const bulletPadding = 2 // Bullet needs to be closer
-    const enemyPadding = -8 // Enemy hitbox is smaller (8px smaller on each side)
+    // Much tighter collision area - only the center part of the chicken counts
+    const bulletCenterX = bullet.x + (bullet.width || 4) / 2
+    const bulletCenterY = bullet.y + (bullet.height || 4) / 2
     
-    return bullet.x + bulletPadding < enemy.x + enemy.width + enemyPadding &&
-           bullet.x + (bullet.width || 4) - bulletPadding > enemy.x - enemyPadding &&
-           bullet.y + bulletPadding < enemy.y + enemy.height + enemyPadding &&
-           bullet.y + (bullet.height || 4) - bulletPadding > enemy.y - enemyPadding
+    // Enemy hitbox is much smaller - only the center 40% of the sprite
+    const enemyHitboxWidth = enemy.width * 0.4  // Only 40% of width
+    const enemyHitboxHeight = enemy.height * 0.4 // Only 40% of height
+    const enemyHitboxX = enemy.x + enemy.width * 0.3  // Centered horizontally
+    const enemyHitboxY = enemy.y + enemy.height * 0.3 // Centered vertically
+    
+    return bulletCenterX >= enemyHitboxX && 
+           bulletCenterX <= enemyHitboxX + enemyHitboxWidth &&
+           bulletCenterY >= enemyHitboxY && 
+           bulletCenterY <= enemyHitboxY + enemyHitboxHeight
   }
 
   // Very strict collision detection for enemies hitting player
   isEnemyHittingPlayer(enemy, player) {
-    // Much smaller collision area - enemy must actually touch player center
-    const enemyPadding = 5 // Enemy hitbox smaller
-    const playerPadding = 8 // Player hitbox much smaller
+    // Both chicken and player have very tight hitboxes - only center 30% counts
+    const enemyHitboxWidth = enemy.width * 0.3
+    const enemyHitboxHeight = enemy.height * 0.3
+    const enemyHitboxX = enemy.x + enemy.width * 0.35
+    const enemyHitboxY = enemy.y + enemy.height * 0.35
     
-    return enemy.x + enemyPadding < player.x + player.width - playerPadding &&
-           enemy.x + enemy.width - enemyPadding > player.x + playerPadding &&
-           enemy.y + enemyPadding < player.y + player.height - playerPadding &&
-           enemy.y + enemy.height - enemyPadding > player.y + playerPadding
+    const playerHitboxWidth = player.width * 0.3
+    const playerHitboxHeight = player.height * 0.3
+    const playerHitboxX = player.x + player.width * 0.35
+    const playerHitboxY = player.y + player.height * 0.35
+    
+    return enemyHitboxX < playerHitboxX + playerHitboxWidth &&
+           enemyHitboxX + enemyHitboxWidth > playerHitboxX &&
+           enemyHitboxY < playerHitboxY + playerHitboxHeight &&
+           enemyHitboxY + enemyHitboxHeight > playerHitboxY
   }
   
   // Very precise collision detection for enemy bullets hitting player
   isPlayerHit(bullet) {
-    // Much smaller collision area - bullet must be very close to player center
-    const bulletPadding = 1
-    const playerPadding = 12 // Player has much smaller hitbox
+    // Bullet center must hit player center area (only 25% of player sprite)
+    const bulletCenterX = bullet.x + (bullet.width || 4) / 2
+    const bulletCenterY = bullet.y + (bullet.height || 4) / 2
     
-    return bullet.x + bulletPadding < gameStore.spaceship.x + gameStore.spaceship.width - playerPadding &&
-           bullet.x + (bullet.width || 4) - bulletPadding > gameStore.spaceship.x + playerPadding &&
-           bullet.y + bulletPadding < gameStore.spaceship.y + gameStore.spaceship.height - playerPadding &&
-           bullet.y + (bullet.height || 4) - bulletPadding > gameStore.spaceship.y + playerPadding
+    const playerHitboxWidth = gameStore.spaceship.width * 0.25  // Only 25% of width
+    const playerHitboxHeight = gameStore.spaceship.height * 0.25 // Only 25% of height
+    const playerHitboxX = gameStore.spaceship.x + gameStore.spaceship.width * 0.375  // Centered
+    const playerHitboxY = gameStore.spaceship.y + gameStore.spaceship.height * 0.375 // Centered
+    
+    return bulletCenterX >= playerHitboxX && 
+           bulletCenterX <= playerHitboxX + playerHitboxWidth &&
+           bulletCenterY >= playerHitboxY && 
+           bulletCenterY <= playerHitboxY + playerHitboxHeight
   }
   
   createExplosion(x, y) {

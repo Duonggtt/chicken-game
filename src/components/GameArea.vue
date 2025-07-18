@@ -97,7 +97,7 @@
         }"
       ></div>
       
-      <!-- Chickens - Remove heavy animations for performance -->
+      <!-- Chickens - Precise hitbox visualization -->
       <div 
         v-for="chicken in gameStore.chickens" 
         :key="chicken.id"
@@ -110,6 +110,17 @@
         }"
       >
         <div class="chicken-sprite">🐔</div>
+        
+        <!-- Visual hitbox for debugging (remove in production) -->
+        <!-- 
+        <div class="chicken-hitbox" :style="{
+          left: (chicken.width * 0.3) + 'px',
+          top: (chicken.height * 0.3) + 'px',
+          width: (chicken.width * 0.4) + 'px',
+          height: (chicken.height * 0.4) + 'px'
+        }"></div>
+        -->
+        
         <div v-if="chicken.health < chicken.maxHealth" class="chicken-health">
           <div 
             class="chicken-health-fill" 
@@ -419,9 +430,25 @@ export default {
 }
 
 .chicken {
-  @apply text-2xl flex flex-col items-center justify-center;
+  position: relative;
+  font-size: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
+
+/* Debug hitbox visualization (commented out for production) */
+/*
+.chicken-hitbox {
+  position: absolute;
+  border: 2px solid red;
+  background: rgba(255, 0, 0, 0.2);
+  pointer-events: none;
+  z-index: 100;
+}
+*/
 
 .chicken-health {
   @apply w-full h-1 bg-red-900 rounded-full overflow-hidden mt-1;
