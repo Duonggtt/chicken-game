@@ -155,7 +155,7 @@ export class GameEngine {
     
     gameStore.bullets.push(gameStoreBullet)
     
-    // Play weapon sound
+    // Play weapon sound only once per shot (not per bullet for spread)
     try {
       advancedSoundManager.play('shoot')
     } catch (error) {

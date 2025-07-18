@@ -8,6 +8,16 @@ class AdvancedSoundManager {
     this.initialized = false
     this.synthPresets = {}
     
+    // Add sound throttling to prevent lag
+    this.lastSoundTime = {}
+    this.soundThrottle = {
+      shoot: 50,        // Minimum 50ms between shoot sounds
+      chickenHit: 30,   // Minimum 30ms between hit sounds
+      explosion: 100,   // Minimum 100ms between explosions
+      powerUp: 200,     // Minimum 200ms between power-up sounds
+      default: 20       // Default throttle for other sounds
+    }
+    
     this.init()
   }
 
@@ -17,7 +27,7 @@ class AdvancedSoundManager {
     try {
       // Initialize Tone.js
       await Tone.start()
-      console.log('Tone.js initialized successfully')
+      // Silent initialization
       
       // Create synthesizers for different sound effects
       this.synthPresets = {
@@ -61,9 +71,9 @@ class AdvancedSoundManager {
       this.createBackgroundMusic()
       
       this.initialized = true
-      console.log('Advanced sound manager initialized')
+      // Silent initialization success
     } catch (error) {
-      console.warn('Failed to initialize advanced sound manager:', error)
+      // Silent error handling
       this.initialized = false
     }
   }
@@ -85,20 +95,29 @@ class AdvancedSoundManager {
       }, ['C4', 'G3', 'F4', 'A3'], 'up')
       
       this.musicPattern.interval = '1n'
-      console.log('Background music pattern created successfully')
+      // Silent music creation
     } catch (error) {
-      console.warn('Failed to create background music:', error)
+      // Silent error handling
       this.musicPattern = null
       this.backgroundSynth = null
     }
   }
 
   play(soundName, volume = 1) {
-    console.log(`Advanced sound manager playing: ${soundName}, enabled: ${this.enabled}, initialized: ${this.initialized}`)
+    // Remove console.log to reduce lag and spam
     if (!this.enabled || !this.initialized) {
-      console.log('Sound disabled or not initialized:', soundName)
       return
     }
+
+    // Throttle sounds to prevent lag and spam
+    const now = Date.now()
+    const throttleTime = this.soundThrottle[soundName] || this.soundThrottle.default
+    
+    if (this.lastSoundTime[soundName] && (now - this.lastSoundTime[soundName]) < throttleTime) {
+      return // Skip this sound to prevent spam
+    }
+    
+    this.lastSoundTime[soundName] = now
 
     try {
       const effectiveVolume = this.effectVolume * volume

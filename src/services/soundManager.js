@@ -8,11 +8,21 @@ class SoundManager {
     this.musicVolume = 0.5
     this.effectVolume = 0.7
     
+    // Add sound throttling to prevent lag
+    this.lastSoundTime = {}
+    this.soundThrottle = {
+      shoot: 50,        // Minimum 50ms between shoot sounds
+      chickenHit: 30,   // Minimum 30ms between hit sounds
+      explosion: 100,   // Minimum 100ms between explosions
+      powerUp: 200,     // Minimum 200ms between power-up sounds
+      default: 20       // Default throttle for other sounds
+    }
+    
     this.initSounds()
   }
   
   initSounds() {
-    console.log('Loading sound files...')
+    // Remove console.log to reduce noise
     
     // Try to load audio files, fallback to synthetic sounds
     try {
@@ -23,7 +33,7 @@ class SoundManager {
         volume: this.musicVolume,
         html5: true,
         onloaderror: () => {
-          console.log('Background music file not found, using synthetic music')
+          // Silent fallback - no console.log
           this.music = null
         }
       })
@@ -49,54 +59,58 @@ class SoundManager {
           volume: this.effectVolume,
           html5: true,
           onloaderror: () => {
-            console.log(`${name} sound file not found, will use synthetic sound`)
+            // Silent fallback - no console.log
             this.sounds[name] = null
           }
         })
       }
     } catch (error) {
-      console.log('Error loading audio files, using synthetic sounds:', error)
+      // Silent error handling
       this.music = null
       this.sounds = {}
     }
   }
   
   play(soundType) {
-    console.log(`Playing sound: ${soundType}, enabled: ${this.enabled}`)
+    // Remove excessive logging and add throttling
     if (!this.enabled) return
+    
+    // Throttle sounds to prevent lag and spam
+    const now = Date.now()
+    const throttleTime = this.soundThrottle[soundType] || this.soundThrottle.default
+    
+    if (this.lastSoundTime[soundType] && (now - this.lastSoundTime[soundType]) < throttleTime) {
+      return // Skip this sound to prevent spam
+    }
+    
+    this.lastSoundTime[soundType] = now
     
     try {
       if (typeof Tone !== 'undefined') {
         switch (soundType) {
           case 'shoot':
-            console.log('Playing shoot sound')
             this.playSynth(800, 0.1)
             break
           case 'explosion':
-            console.log('Playing explosion sound')
             this.playNoise(0.5, 0.3)
             break
           case 'powerup':
-            console.log('Playing powerup sound')
             this.playSynth(1200, 0.2)
             this.playSynth(1500, 0.2, 0.1)
             break
           case 'buttonClick':
-            console.log('Playing button click sound')
             this.playSynth(600, 0.05)
             break
           case 'gameOver':
-            console.log('Playing game over sound')
             this.playNoise(200, 1)
             break
           default:
-            console.log('Unknown sound type:', soundType)
+            // Skip unknown sound types silently
+            break
         }
-      } else {
-        console.warn('Tone.js not available for sound:', soundType)
       }
     } catch (error) {
-      console.error('Error playing sound:', error)
+      // Silent error handling to prevent console spam
     }
   }
   

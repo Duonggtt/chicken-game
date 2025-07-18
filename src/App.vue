@@ -93,8 +93,7 @@ export default {
     // Simple inline user tracking for build compatibility
     const userTracker = {
       trackAction: (action, data = {}) => {
-        console.log('Tracking action:', action, data)
-        // Store in localStorage for real tracking
+        // Silent tracking - removed console.log for performance
         const actions = JSON.parse(localStorage.getItem('game_actions') || '[]')
         actions.push({
           action,
@@ -152,29 +151,23 @@ export default {
       })
       
       // Enable audio with user interaction
-      console.log('Enabling sound managers...')
       try {
         advancedSoundManager.enable()
-        console.log('Advanced sound manager enabled')
       } catch (error) {
-        console.warn('Failed to enable advanced sound manager:', error)
+        // Silent fallback
       }
-      
+
       try {
         soundManager.enable()
-        console.log('Basic sound manager enabled')
       } catch (error) {
-        console.warn('Failed to enable basic sound manager:', error)
-      }
-      
-      gameStore.startGame()
+        // Silent fallback
+      }      gameStore.startGame()
       gameEngine.start()
       
-      // Test sound
+      // Test sound silently
       try {
         advancedSoundManager.play('buttonClick')
       } catch (error) {
-        console.warn('Advanced sound failed, trying basic:', error)
         soundManager.play('buttonClick')
       }
     }
