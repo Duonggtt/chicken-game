@@ -15,7 +15,18 @@ export class GameEngine {
     this.targetY = 0
     this.autoShootInterval = null
     this.lastMouseUpdate = 0
-    this.mouseMoveThrottle = 16 // ~60fps
+    
+    // Mobile optimization
+    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    this.isTablet = /iPad|Android(?=.*\bMobile\b)(?=.*\bSafari\b)|Android(?=.*\bSafari\b)/.test(navigator.userAgent) || 
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    
+    // Adaptive performance settings
+    this.mouseMoveThrottle = this.isMobile ? 33 : 16 // 30fps for mobile, 60fps for desktop
+    this.gameLoopThrottle = this.isMobile ? 33 : 16
+    this.maxExplosions = this.isMobile ? 5 : 15
+    this.maxBullets = this.isMobile ? 30 : 100
+    this.particleCount = this.isMobile ? 0.3 : 1.0 // Reduce particles on mobile
     
     this.init()
   }
@@ -88,11 +99,15 @@ export class GameEngine {
   }
   
   startAutoShoot() {
+    // Slower shooting on mobile to reduce CPU load
+    const baseInterval = gameStore.currentWeapon === 'rapid' ? 100 : 250
+    const shootInterval = this.isMobile ? baseInterval * 1.5 : baseInterval
+    
     this.autoShootInterval = setInterval(() => {
       if (gameStore.gameStarted && !gameStore.paused) {
         this.shoot()
       }
-    }, gameStore.currentWeapon === 'rapid' ? 100 : 250)
+    }, shootInterval)
   }
   
   shoot() {
@@ -240,6 +255,13 @@ export class GameEngine {
     if (!gameStore.gameStarted) return
     
     const deltaTime = currentTime - this.lastTime
+    
+    // Throttle game loop for mobile performance
+    if (deltaTime < this.gameLoopThrottle) {
+      this.animationId = requestAnimationFrame((time) => this.gameLoop(time))
+      return
+    }
+    
     this.lastTime = currentTime
     
     // Always update spaceship position for smooth movement
@@ -255,6 +277,9 @@ export class GameEngine {
       this.updatePowerUps(deltaTime)
       this.checkCollisions()
       this.checkLevelComplete()
+      
+      // Clean up arrays to prevent memory issues on mobile
+      this.cleanupArrays()
     }
     
     this.animationId = requestAnimationFrame((time) => this.gameLoop(time))
@@ -383,16 +408,17 @@ export class GameEngine {
     if (!boss.movementPattern) {
       boss.movementPattern = 'horizontal'
       boss.movementTimer = 0
-      boss.patternDuration = 3000 // 3 seconds per pattern
+      boss.patternDuration = 2500 // 2.5 seconds per pattern
       boss.verticalDirection = 1
+      boss.rushDirection = 1
     }
     
     boss.movementTimer += deltaTime
     
-    // Switch movement patterns every 3 seconds
+    // Switch movement patterns every 2.5 seconds
     if (boss.movementTimer > boss.patternDuration) {
       boss.movementTimer = 0
-      const patterns = ['horizontal', 'zigzag', 'circle', 'vertical']
+      const patterns = ['horizontal', 'zigzag', 'circle', 'vertical', 'rush', 'wave']
       boss.movementPattern = patterns[Math.floor(Math.random() * patterns.length)]
     }
     
@@ -407,7 +433,7 @@ export class GameEngine {
         
       case 'zigzag':
         boss.x += boss.direction * boss.speed * (deltaTime / 16)
-        boss.y += Math.sin(boss.movementTimer / 200) * 2
+        boss.y += Math.sin(boss.movementTimer / 200) * 3
         if (boss.x <= 0 || boss.x >= gameStore.screenWidth - boss.width) {
           boss.direction *= -1
         }
@@ -415,18 +441,38 @@ export class GameEngine {
         
       case 'circle':
         const centerX = gameStore.screenWidth / 2
-        const radius = 80
-        const angle = boss.movementTimer / 1000
+        const radius = 100
+        const angle = boss.movementTimer / 800
         boss.x = centerX + Math.cos(angle) * radius - boss.width / 2
-        boss.y = 50 + Math.sin(angle) * 30
+        boss.y = 60 + Math.sin(angle) * 40
         break
         
       case 'vertical':
-        boss.y += boss.verticalDirection * boss.speed * 0.5 * (deltaTime / 16)
-        if (boss.y <= 20 || boss.y >= 120) {
+        boss.y += boss.verticalDirection * boss.speed * 0.8 * (deltaTime / 16)
+        if (boss.y <= 20 || boss.y >= 140) {
           boss.verticalDirection *= -1
         }
-        boss.x += boss.direction * boss.speed * 0.3 * (deltaTime / 16)
+        boss.x += boss.direction * boss.speed * 0.2 * (deltaTime / 16)
+        if (boss.x <= 0 || boss.x >= gameStore.screenWidth - boss.width) {
+          boss.direction *= -1
+        }
+        break
+        
+      case 'rush':
+        // Boss lao xuống và lùi lên
+        boss.y += boss.rushDirection * boss.speed * 1.5 * (deltaTime / 16)
+        if (boss.y <= 15) {
+          boss.rushDirection = 1 // Lao xuống
+        } else if (boss.y >= 180) {
+          boss.rushDirection = -1 // Lùi lên
+        }
+        boss.x += Math.sin(boss.movementTimer / 300) * 2
+        break
+        
+      case 'wave':
+        // Di chuyển theo sóng
+        boss.x += boss.direction * boss.speed * 0.7 * (deltaTime / 16)
+        boss.y = 60 + Math.sin(boss.movementTimer / 400) * 50
         if (boss.x <= 0 || boss.x >= gameStore.screenWidth - boss.width) {
           boss.direction *= -1
         }
@@ -604,21 +650,6 @@ export class GameEngine {
       }
     })
     
-    // Enemy bullets vs Player (strict collision)
-    gameStore.bullets.forEach((bullet, bulletIndex) => {
-      if (bullet.type !== 'enemy') return
-      
-      if (this.isEnemyHittingPlayer(bullet, gameStore.spaceship)) {
-        gameStore.bullets.splice(bulletIndex, 1)
-        gameStore.takeDamage()
-        try {
-          advancedSoundManager.play('playerHit')
-        } catch (error) {
-          soundManager.play('playerHit')
-        }
-      }
-    })
-    
     // Chickens vs Player (strict collision)
     gameStore.chickens.forEach((chicken, chickenIndex) => {
       if (this.isEnemyHittingPlayer(chicken, gameStore.spaceship)) {
@@ -673,13 +704,30 @@ export class GameEngine {
   }
   
   createExplosion(x, y) {
+    // Limit explosions on mobile for performance
+    if (gameStore.explosions.length >= this.maxExplosions) {
+      gameStore.explosions.shift() // Remove oldest explosion
+    }
+    
     const explosion = {
       id: Date.now() + Math.random(),
       x: x - 32,
       y: y - 32,
-      life: 500
+      life: this.isMobile ? 300 : 500 // Shorter life on mobile
     }
     gameStore.explosions.push(explosion)
+  }
+  
+  cleanupArrays() {
+    // Prevent memory issues by limiting array sizes on mobile
+    if (gameStore.bullets.length > this.maxBullets) {
+      gameStore.bullets = gameStore.bullets.slice(-this.maxBullets)
+    }
+    
+    // Clean up old explosions more aggressively on mobile
+    if (this.isMobile && gameStore.explosions.length > this.maxExplosions) {
+      gameStore.explosions = gameStore.explosions.slice(-this.maxExplosions)
+    }
   }
   
   applyPowerUp(type) {

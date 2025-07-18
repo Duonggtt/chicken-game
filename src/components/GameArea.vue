@@ -23,7 +23,7 @@
       <div class="ui-center">
         <div v-if="gameStore.boss" class="boss-health">
           <div class="boss-info">
-            <span class="text-red-300 text-sm font-bold">🐔 BOSS LV{{ gameStore.boss.level }}</span>
+            <span class="text-red-300 text-xs font-bold">🐔 BOSS LV{{ gameStore.boss.level }}</span>
             <span class="text-red-200 text-xs">{{ gameStore.boss.health }}/{{ gameStore.boss.maxHealth }} HP</span>
           </div>
           <div class="boss-health-bar">
@@ -131,13 +131,19 @@
       >
         <div class="boss-sprite">
           <!-- Con gà boss to với hiệu ứng -->
-          <div class="chicken-boss-body">
-            �
+          <div class="chicken-boss-body" :style="{ 
+            fontSize: getBossSize(gameStore.boss.level),
+            transform: `scale(${getBossScale(gameStore.boss.level)})`,
+            filter: `drop-shadow(0 0 ${10 + gameStore.boss.level * 2}px rgba(255, 215, 0, ${0.8 + gameStore.boss.level * 0.1}))`
+          }">
+            🐔
           </div>
           <div class="boss-level-indicator">
             LV.{{ gameStore.boss.level }}
           </div>
-          <div class="boss-glow"></div>
+          <div class="boss-glow" :style="{
+            background: `radial-gradient(circle, rgba(255, 0, 0, ${0.3 + gameStore.boss.level * 0.1}) 0%, transparent 70%)`
+          }"></div>
         </div>
       </div>
       
@@ -268,6 +274,19 @@ export default {
         window.gameEngine.shoot()
       }
     }
+    
+    // Tính kích thước boss theo level
+    const getBossSize = (level) => {
+      const baseSize = 5 // 5rem base (khá to)
+      const sizeIncrease = level * 0.3 // Tăng 0.3rem mỗi level
+      return `${Math.min(baseSize + sizeIncrease, 8)}rem` // Max 8rem
+    }
+    
+    const getBossScale = (level) => {
+      const baseScale = 1.0
+      const scaleIncrease = level * 0.05 // Tăng 5% scale mỗi level
+      return Math.min(baseScale + scaleIncrease, 1.5) // Max scale 1.5
+    }
 
     return {
       gameStore,
@@ -275,6 +294,8 @@ export default {
       showLevelTransition,
       getPowerUpIcon,
       getLevelMessage,
+      getBossSize,
+      getBossScale,
       handleMouseMove,
       handleClick
     }
@@ -336,7 +357,7 @@ export default {
 }
 
 .boss-health-bar {
-  @apply w-60 h-4 bg-red-900 rounded-full overflow-hidden border border-red-400 shadow-md;
+  @apply w-48 h-3 bg-red-900 rounded-full overflow-hidden border border-red-400 shadow-md;
 }
 
 .boss-health-fill {
@@ -425,9 +446,12 @@ export default {
 }
 
 .chicken-boss-body {
-  @apply text-6xl transform scale-125;
+  /* Size sẽ được set bởi JavaScript để tăng theo level */
   filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
   animation: boss-float 2s ease-in-out infinite;
+  transition: all 0.5s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .boss-level-indicator {
@@ -443,8 +467,8 @@ export default {
 }
 
 @keyframes boss-float {
-  0%, 100% { transform: translateY(0) scale(1.25); }
-  50% { transform: translateY(-5px) scale(1.3); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
 @keyframes boss-glow {
@@ -484,7 +508,7 @@ export default {
   }
   
   .boss-health-bar {
-    @apply w-48;
+    @apply w-40 h-2;
   }
   
   .level-transition h2 {
@@ -523,6 +547,86 @@ export default {
   
   .level-transition p {
     @apply text-lg;
+  }
+}
+
+/* Mobile Performance Optimizations */
+@media (max-width: 768px) {
+  /* Reduce animations on mobile for better performance */
+  .spaceship {
+    animation: none; /* Disable glow animation on mobile */
+  }
+  
+  .boss-bullet {
+    animation: none; /* Disable bullet glow on mobile */
+  }
+  
+  .boss-float {
+    animation-duration: 3s; /* Slower animation */
+  }
+  
+  .powerup-float {
+    animation-duration: 4s; /* Slower animation */
+  }
+  
+  /* Adjust boss size for mobile */
+  .chicken-boss-body {
+    font-size: 3rem !important; /* Override JavaScript size on mobile */
+    transform: scale(1.2) !important; /* Override scale on mobile */
+  }
+  
+  .boss-level-indicator {
+    font-size: 8px;
+    top: -4px;
+    right: -4px;
+  }
+  
+  /* Reduce effects */
+  .bullet {
+    box-shadow: none;
+  }
+  
+  .enemy-bullet {
+    box-shadow: none;
+  }
+  
+  .boss-bullet {
+    box-shadow: 0 0 4px rgba(255, 68, 68, 0.6);
+  }
+  
+  /* Disable complex filters on mobile */
+  .spaceship {
+    filter: none;
+  }
+  
+  .chicken {
+    filter: none;
+  }
+  
+  .boss {
+    filter: drop-shadow(0 2px 4px rgba(255, 0, 0, 0.6));
+  }
+  
+  .chicken-boss-body {
+    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6)) !important;
+  }
+}
+
+/* Further optimizations for very small screens */
+@media (max-width: 480px) {
+  /* Disable all non-essential animations */
+  * {
+    animation-duration: 0s !important;
+    transition-duration: 0.1s !important;
+  }
+  
+  /* Keep only essential animations */
+  .level-transition {
+    animation-duration: 1s !important;
+  }
+  
+  .boss-health-fill {
+    transition-duration: 0.3s !important;
   }
 }
 </style>
